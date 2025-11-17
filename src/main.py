@@ -156,18 +156,18 @@ def simulate_bet_execution(stake1, stake2, odds1, odds2, slippage):
     actual_odds1 = odds1 * (1 - random.uniform(0, slippage))
     actual_odds2 = odds2 * (1 - random.uniform(0, slippage))
     
-    payout1 = stake1 * actual_odds1
-    payout2 = stake2 * actual_odds2
+    # Calculate payouts for both possible outcomes
+    payout1 = stake1 * actual_odds1  # If outcome 1 wins
+    payout2 = stake2 * actual_odds2  # If outcome 2 wins
     
-    winning_side = random.choice([1, 2])
-    
-    if winning_side == 1:
-        profit = payout1 - (stake1 + stake2)
-    else:
-        profit = payout2 - (stake1 + stake2)
+    # TRUE ARBITRAGE: Both bets are placed, one wins, one loses
+    # Guaranteed profit is the MINIMUM payout minus total stake
+    # This ensures profit regardless of which outcome occurs
+    guaranteed_payout = min(payout1, payout2)
+    total_stake = stake1 + stake2
+    profit = guaranteed_payout - total_stake
     
     return profit, actual_odds1, actual_odds2
-
 
 def filter_valid_bookmakers(bookmakers, valid_set):
     """Filter bookmakers to only include those in our valid set"""
