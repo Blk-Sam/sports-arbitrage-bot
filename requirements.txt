@@ -1,22 +1,2 @@
-# Python Dependencies for Sports Arbitrage Bot
-
-# HTTP Requests
 requests==2.31.0
-
-# Data Handling
-pandas==2.1.4
-numpy==1.26.2
-
-# Environment Variables
 python-dotenv==1.0.0
-
-# Selenium for browser automation (bet placement)
-selenium==4.16.0
-webdriver-manager==4.0.1
-
-# Database (optional - for logging arbitrage opportunities)
-sqlite3
-
-# Testing
-pytest==7.4.3
-pytest-cov==4.1.0
