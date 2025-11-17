@@ -1,3 +1,10 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+api_key = os.getenv("ODDS_API_KEY")
+print("Loaded API key:", api_key)
+
 import schedule
 import time
 import subprocess

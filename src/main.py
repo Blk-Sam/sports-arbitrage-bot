@@ -1,3 +1,10 @@
+from dotenv import load_dotenv
+import os
+
+# Load .env file and get API key
+load_dotenv()
+API_KEY = os.getenv("ODDS_API_KEY")
+
 import sys
 import csv
 import requests
@@ -5,7 +12,6 @@ import random
 import time
 from profit_tracker import log_bet, calculate_profit_loss
 from reporting import run_report
-import os
 
 BOOKMAKER_COMMISSION = {
     "bet365": 0.05,
@@ -19,9 +25,9 @@ START_BANKROLL = 100
 BANKROLL = START_BANKROLL
 SIMULATION_LOG = []
 
-API_KEY = os.getenv("ODDS_API_KEY")   # Your API key
 MAX_API_CALLS = 500
 api_calls_made = 0
+
 
 def fetch_bulk_odds(sport_key, api_key, market="h2h", region="eu"):
     global api_calls_made
@@ -74,7 +80,6 @@ def simulate_weighted_bets(arbitrage_list):
         profit1 = (stake1 * arb_info['odds_1'] * (1 - comm1)) - (stake1 + stake2)
         profit2 = (stake2 * arb_info['odds_2'] * (1 - comm2)) - (stake1 + stake2)
         profit = min(profit1, profit2)
-
         BANKROLL += profit
 
         bet_log_entry = {
@@ -97,7 +102,6 @@ def simulate_weighted_bets(arbitrage_list):
 
         SIMULATION_LOG.append(bet_log_entry)
         log_bet(bet_log_entry)
-
         time.sleep(random.uniform(1, 5))  # Random delay 1-5s
 
 def find_spread_totals_middles(valid_bms, market):
@@ -117,7 +121,6 @@ def find_spread_totals_middles(valid_bms, market):
                             'price': price,
                             'point': point
                         })
-
     overs = [o for o in outcomes if o['name'] == 'Over']
     unders = [o for o in outcomes if o['name'] == 'Under']
 
@@ -125,7 +128,6 @@ def find_spread_totals_middles(valid_bms, market):
         for under in unders:
             if under['point'] > over['point'] and under['bookmaker'] != over['bookmaker']:
                 middles.append((over, under))
-
     return middles
 
 def save_simulation_log(filename="simulation_log.csv"):
@@ -155,11 +157,9 @@ def main():
                     valid_bms = [b for b in game["bookmakers"] if b["key"].lower() in ALBERTA_BOOKS]
                     if len(valid_bms) < 2:
                         continue
-                    # No "h2h" logic needed, spreads/totals only
                     for bm in valid_bms:
                         for market_obj in bm["markets"]:
                             if market_obj["key"] == market:
-                                # Middling logic for spreads/totals
                                 middles = find_spread_totals_middles(valid_bms, market)
                                 for over, under in middles:
                                     comm_over = BOOKMAKER_COMMISSION[over['bookmaker'].lower()]
@@ -195,6 +195,7 @@ def main():
     print(f"Logged Profit/Loss (from bets): ${calculate_profit_loss():.2f}")
     print(f"Total API calls made: {api_calls_made} of {MAX_API_CALLS}")
     run_report("bet_history.csv")
+
 
 if __name__ == "__main__":
     main()
