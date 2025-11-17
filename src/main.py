@@ -19,7 +19,7 @@ START_BANKROLL = 100
 BANKROLL = START_BANKROLL
 SIMULATION_LOG = []
 
-API_KEY = "ff0e6bbe7f620236dc018e7c4a212e95"   # Your API key
+API_KEY = os.getenv("ODDS_API_KEY")   # Your API key
 MAX_API_CALLS = 500
 api_calls_made = 0
 
