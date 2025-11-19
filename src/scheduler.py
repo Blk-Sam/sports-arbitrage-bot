@@ -12,9 +12,10 @@ load_dotenv()
 API_KEY = os.getenv("ODDS_API_KEY")
 ADVANCE_MINUTES = int(os.getenv("ADVANCE_MINUTES", "20"))
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-REGIONS_TO_SCAN = [r.strip() for r in os.getenv("REGIONS", "us").split(",") if r.strip()]
 MARKETS_TO_SCAN = [m.strip() for m in os.getenv("MARKETS", "h2h").split(",") if m.strip()]
 MIN_API_INTERVAL = float(os.getenv("MIN_API_INTERVAL", "2"))  # seconds between API calls
+
+BOOKMAKERS_STR = ",".join([b.strip() for b in os.getenv("BOOKMAKERS", "").split(",") if b.strip()])
 
 SPORT_WHITELIST = set([
     "basketball_nba",
@@ -26,9 +27,8 @@ SPORT_WHITELIST = set([
 
 logging.basicConfig(level=getattr(logging, LOG_LEVEL, logging.INFO))
 
-
 def get_dynamic_sleep_interval():
-    now = datetime.now (timezone.utc)
+    now = datetime.now(timezone.utc)
     hour = now.hour
     if 4 <= hour < 10:      # Early morning downtime (few new odds)
         return 60 * 60      # 60 min
@@ -36,7 +36,6 @@ def get_dynamic_sleep_interval():
         return 15 * 60      # 15 min
     else:                   # Night/late night
         return 30 * 60      # 30 min
-
 
 def get_active_sports(api_key):
     """Load only 'active' in-season sports from the Odds API, filtered by your whitelist."""
@@ -50,12 +49,10 @@ def get_active_sports(api_key):
         logging.error(f"Could not fetch active sports: {e}")
         return list(SPORT_WHITELIST)
 
-
-def get_next_event_time(api_key, sports_to_scan, regions_to_scan, markets_to_scan, min_interval=2.0):
-    """Fetch the soonest upcoming event start time across all sports, with region/market batching and per-call throttling."""
+def get_next_event_time(api_key, sports_to_scan, bookmakers_str, markets_to_scan, min_interval=2.0):
+    """Fetch the soonest upcoming event start time across all sports with bookmaker/market batching and per-call throttling."""
     collector = OddsDataCollector(api_key)
     soonest = None
-    regions_str = ",".join(regions_to_scan)
     markets_str = ",".join(markets_to_scan)
     last_call = 0
     for sport in sports_to_scan:
@@ -65,7 +62,7 @@ def get_next_event_time(api_key, sports_to_scan, regions_to_scan, markets_to_sca
             time.sleep(min_interval - elapsed)
         last_call = time.time()
 
-        games = collector.fetch_odds(sport, regions=regions_str, markets=markets_str)
+        games = collector.fetch_odds(sport, bookmakers=bookmakers_str, markets=markets_str)
         for game in games:
             start_str = game.get("commence_time")
             if not start_str:
@@ -79,7 +76,6 @@ def get_next_event_time(api_key, sports_to_scan, regions_to_scan, markets_to_sca
                 soonest = start_dt
     return soonest
 
-
 def run_bot():
     now_utc = datetime.now(timezone.utc)
     logging.info("Running arbitrage bot at %s", now_utc.isoformat())
@@ -88,12 +84,11 @@ def run_bot():
     if result.stderr:
         logging.error("Bot error: %s", result.stderr)
 
-
 def dynamic_scheduler():
     logging.info("Starting dynamic event-driven scheduler.")
     while True:
         SPORTS_TO_SCAN = get_active_sports(API_KEY)
-        next_event = get_next_event_time(API_KEY, SPORTS_TO_SCAN, REGIONS_TO_SCAN, MARKETS_TO_SCAN, min_interval=MIN_API_INTERVAL)
+        next_event = get_next_event_time(API_KEY, SPORTS_TO_SCAN, BOOKMAKERS_STR, MARKETS_TO_SCAN, min_interval=MIN_API_INTERVAL)
         now_utc = datetime.now(timezone.utc)
         if not next_event or next_event < now_utc:
             sleep_interval = get_dynamic_sleep_interval()
@@ -111,7 +106,6 @@ def dynamic_scheduler():
             time.sleep(delay)
             run_bot()
             time.sleep(600)
-
 
 if __name__ == "__main__":
     try:

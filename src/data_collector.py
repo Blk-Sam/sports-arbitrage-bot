@@ -39,20 +39,29 @@ class OddsDataCollector:
         # Only return active sports' keys for in-season coverage
         return [sport['key'] for sport in sports_data if sport.get('active')]
 
-    def fetch_odds(self, sport: str, regions: str = "us", markets: str = "h2h", retries: int = 3, backoff: int = 8) -> List[Dict]:
-        """Fetch odds data for a given sport, regions, and markets."""
+    # UPDATED: bookmakers support (preferred over regions when provided)
+    def fetch_odds(self, sport: str, regions: str = None, markets: str = "h2h", bookmakers: str = None, retries: int = 3, backoff: int = 8) -> List[Dict]:
+        """Fetch odds data for a given sport, by bookmakers (preferred) or regions."""
         endpoint = f"{self.base_url.rstrip('/')}/{sport}/odds"
         params = {
             "apiKey": self.api_key,
-            "regions": regions,
             "markets": markets,
             "oddsFormat": "decimal"
         }
+        if bookmakers:
+            params["bookmakers"] = bookmakers
+            log_label = bookmakers
+        elif regions:
+            params["regions"] = regions
+            log_label = regions
+        else:
+            params["regions"] = "us"
+            log_label = "us"
         data = self._request(endpoint, params, retries, backoff)
         if not isinstance(data, list):
             logging.error(f"Malformed odds data returned for sport {sport}.")
             return []
-        logging.info(f"Fetched {len(data)} odds results for {sport} [{regions} | {markets}]")
+        logging.info(f"Fetched {len(data)} odds results for {sport} [{log_label} | {markets}]")
         return data
 
     def parse_odds_response(self, raw_odds: List[Dict]) -> List[Dict]:
