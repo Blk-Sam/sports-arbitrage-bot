@@ -1,0 +1,91 @@
+timestamp,event,details
+2025-11-22 23:23:30,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""basketball_ncaab"", ""americanfootball_ncaaf"", ""americanfootball_nfl"", ""basketball_nba"", ""icehockey_nhl""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%""}"
+2025-11-22 23:24:41,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""icehockey_nhl"", ""basketball_nba"", ""americanfootball_nfl"", ""basketball_ncaab"", ""americanfootball_ncaaf""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%""}"
+2025-11-22 23:26:22,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-22 23:31:58,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-22 23:37:35,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-22 23:43:12,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-22 23:48:49,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-22 23:54:26,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-23 00:00:04,NO_NEXT_EVENT,Sleeping 4 min
+2025-11-23 00:04:04,DAILY_BACKUP_FAILED,Backup creation returned None
+2025-11-23 00:05:33,SCHEDULER_STOPPED,User interrupted
+2025-11-23 00:05:46,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""americanfootball_nfl"", ""basketball_ncaab"", ""icehockey_nhl"", ""americanfootball_ncaaf"", ""basketball_nba""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%""}"
+2025-11-23 00:05:47,DAILY_BACKUP_FAILED,Backup creation returned None
+2025-11-23 00:10:36,NO_NEXT_EVENT,Sleeping 12 min
+2025-11-23 00:22:36,DAILY_BACKUP_FAILED,Backup creation returned None
+2025-11-23 00:27:25,NO_NEXT_EVENT,Sleeping 12 min
+2025-11-23 00:39:25,DAILY_BACKUP_FAILED,Backup creation returned None
+2025-11-23 00:44:15,NO_NEXT_EVENT,Sleeping 12 min
+2025-11-23 00:56:15,DAILY_BACKUP_FAILED,Backup creation returned None
+2025-11-23 01:01:04,NO_NEXT_EVENT,Sleeping 12 min
+2025-11-23 01:14:49,SCHEDULER_STOPPED,User interrupted
+2025-11-23 01:31:40,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""americanfootball_ncaaf"", ""americanfootball_nfl"", ""basketball_nba"", ""icehockey_nhl"", ""basketball_ncaab""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": false, ""SLEEP_HOURS"": null}"
+2025-11-23 01:41:06,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""americanfootball_nfl"", ""icehockey_nhl"", ""basketball_nba"", ""basketball_ncaab"", ""americanfootball_ncaaf""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": false, ""SLEEP_HOURS"": null}"
+2025-11-23 01:45:23,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""basketball_nba"", ""americanfootball_nfl"", ""icehockey_nhl"", ""americanfootball_ncaaf"", ""basketball_ncaab""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": false, ""SLEEP_HOURS"": null}"
+2025-11-23 01:46:30,SCHEDULER_STOPPED,User interrupted
+2025-11-23 01:50:24,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""basketball_nba"", ""americanfootball_nfl"", ""americanfootball_ncaaf"", ""basketball_ncaab"", ""icehockey_nhl""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": true, ""SLEEP_HOURS"": ""0-8""}"
+2025-11-23 01:50:27,SLEEP_MODE_ACTIVE,Sleeping until 08:00
+2025-11-23 08:00:27,SLEEP_MODE_ENDED,Resumed operations
+2025-11-23 08:05:18,SCHEDULED_SLEEP,Bot will run in 154.7 min
+2025-11-23 10:40:01,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:40:03,BOT_FINISH,Code: 1
+2025-11-23 10:41:04,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:41:06,BOT_FINISH,Code: 1
+2025-11-23 10:42:08,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:42:10,BOT_FINISH,Code: 1
+2025-11-23 10:43:11,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:43:13,BOT_FINISH,Code: 1
+2025-11-23 10:44:14,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:44:17,BOT_FINISH,Code: 1
+2025-11-23 10:45:18,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:45:20,BOT_FINISH,Code: 1
+2025-11-23 10:46:21,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:46:24,BOT_FINISH,Code: 1
+2025-11-23 10:47:25,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:47:27,BOT_FINISH,Code: 1
+2025-11-23 10:48:29,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:48:31,BOT_FINISH,Code: 1
+2025-11-23 10:49:32,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:49:34,BOT_FINISH,Code: 1
+2025-11-23 10:50:35,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:50:37,BOT_FINISH,Code: 1
+2025-11-23 10:51:39,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:51:41,BOT_FINISH,Code: 1
+2025-11-23 10:52:42,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:52:44,BOT_FINISH,Code: 1
+2025-11-23 10:53:45,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:53:48,BOT_FINISH,Code: 1
+2025-11-23 10:54:49,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:54:51,BOT_FINISH,Code: 1
+2025-11-23 10:55:52,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:55:54,BOT_FINISH,Code: 1
+2025-11-23 10:56:55,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:56:58,BOT_FINISH,Code: 1
+2025-11-23 10:57:59,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:58:01,BOT_FINISH,Code: 1
+2025-11-23 10:59:02,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 10:59:05,BOT_FINISH,Code: 1
+2025-11-23 11:00:06,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 11:00:08,BOT_FINISH,Code: 1
+2025-11-23 11:01:09,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 11:01:11,BOT_FINISH,Code: 1
+2025-11-23 11:02:13,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 11:02:15,BOT_FINISH,Code: 1
+2025-11-23 11:03:16,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.4%)"
+2025-11-23 11:03:18,BOT_FINISH,Code: 1
+2025-11-23 11:03:33,SCHEDULER_STOPPED,User interrupted
+2025-11-23 11:08:12,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""icehockey_nhl"", ""americanfootball_nfl"", ""americanfootball_ncaaf"", ""basketball_nba"", ""basketball_ncaab""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": true, ""SLEEP_HOURS"": ""0-8""}"
+2025-11-23 11:13:04,NO_NEXT_EVENT,Sleeping 12 min
+2025-11-23 11:29:53,RUN_NOW,Event at 2025-11-23 18:30:00+00:00
+2025-11-23 11:29:54,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 1.0%)"
+2025-11-23 11:29:55,BOT_FINISH,Code: 1
+2025-11-23 11:30:57,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 1.0%)"
+2025-11-23 11:30:58,BOT_FINISH,Code: 1
+2025-11-23 11:31:59,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 1.0%)"
+2025-11-23 11:32:01,BOT_FINISH,Code: 1
+2025-11-23 11:33:02,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 1.0%)"
+2025-11-23 11:33:03,BOT_FINISH,Code: 1
+2025-11-23 11:33:25,SCHEDULER_STOPPED,User interrupted
+2025-11-23 11:33:44,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""americanfootball_ncaaf"", ""americanfootball_nfl"", ""basketball_ncaab"", ""basketball_nba"", ""icehockey_nhl""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": true, ""SLEEP_HOURS"": ""0-8""}"
+2025-11-23 11:33:46,NO_NEXT_EVENT,Sleeping 12 min

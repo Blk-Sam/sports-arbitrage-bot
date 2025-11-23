@@ -1,0 +1,33 @@
+timestamp,event,details
+2025-11-20 15:33:44,SCHEDULER_STARTUP,"Startup configuration: API_KEY=SET, ADVANCE_MINUTES=20, MIN_API_INTERVAL=2.0, POST_RUN_SLEEP=900.0, BOOKMAKERS_STR=bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet, SPORT_WHITELIST={'basketball_ncaab', 'icehockey_nhl', 'americanfootball_ncaaf', 'americanfootball_nfl', 'basketball_nba'}"
+2025-11-20 15:33:54,SCHEDULED_SLEEP,Bot will run in 6.1 min for event at 2025-11-20 23:00:00+00:00
+2025-11-20 15:39:58,SCHEDULER_STOPPED,User interrupted
+2025-11-20 15:40:45,SCHEDULER_STARTUP,"{'ADVANCE_MINUTES': 20, 'MIN_API_INTERVAL': 2.0, 'POST_RUN_SLEEP': 900.0, 'BOOKMAKERS_STR': 'bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet', 'SPORT_WHITELIST': ['americanfootball_nfl', 'icehockey_nhl', 'basketball_nba', 'americanfootball_ncaaf', 'basketball_ncaab']}"
+2025-11-20 15:40:45,RUN_NOW,Event at 2025-11-20 23:00:00+00:00
+2025-11-20 15:40:46,RUN_MAIN_START,Bot run started at 2025-11-20T22:40:46.775604+00:00
+2025-11-20 15:41:01,RUN_MAIN_FINISH,"Code: 0, stdout: Daily PnL saved to daily_pnl.csv
+Visualization saved to daily_pnl_chart.png
+PnL summary:
+ count    1, stderr: INFO:root:============================================================
+INFO:root:Starting Async Arbi"
+2025-11-20 15:41:02,SLEEP_AFTER_RUN,Slept 900.0 sec after bot run.
+2025-11-20 15:56:11,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 16:06:21,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 16:16:29,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 16:26:39,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 16:36:48,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 16:46:57,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 16:57:06,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 17:07:16,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 17:17:25,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 17:27:34,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 17:37:39,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 17:47:48,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 17:57:57,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 18:08:06,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 18:18:16,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 18:28:25,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 18:38:34,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 18:48:43,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 18:59:10,NO_NEXT_EVENT,Sleeping 10 min
+2025-11-20 19:09:40,SCHEDULER_STOPPED,User interrupted

@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-11-23T11:33:46.370689",
+  "total_api_calls": 20,
+  "demo_phase": true,
+  "status": "running",
+  "uptime_hours": 0.0,
+  "adaptive_polling": {
+    "is_peak_hours": false,
+    "sleep_mode": {
+      "enabled": true,
+      "sleep_hours": "00:00-08:00",
+      "current_hour": 11,
+      "is_sleeping": false,
+      "wake_time": null
+    },
+    "quota_usage": "1.0%",
+    "time_multiplier": 3.0,
+    "quota_multiplier": 1.0,
+    "base_interval": 120,
+    "sport_priorities": {},
+    "market_priorities": {}
+  },
+  "last_daily_backup": null
+}

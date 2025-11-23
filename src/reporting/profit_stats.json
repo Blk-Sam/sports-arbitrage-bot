@@ -1,0 +1,165 @@
+{
+  "overall": {
+    "total": 12,
+    "wins": 12,
+    "losses": 0,
+    "profit": 71.84,
+    "roi": 71.84,
+    "win_rate": 100.0,
+    "avg_profit": 5.9867,
+    "total_stake": 37.81
+  },
+  "by_sport": {
+    "basketball_nba": {
+      "total": 2,
+      "wins": 2,
+      "losses": 0,
+      "profit": 0.12,
+      "win_rate": 100.0
+    },
+    "americanfootball_ncaaf": {
+      "total": 3,
+      "wins": 3,
+      "losses": 0,
+      "profit": 0.33,
+      "win_rate": 100.0
+    },
+    "basketball_ncaab": {
+      "total": 1,
+      "wins": 1,
+      "losses": 0,
+      "profit": 0.03,
+      "win_rate": 100.0
+    },
+    "icehockey_nhl": {
+      "total": 4,
+      "wins": 4,
+      "losses": 0,
+      "profit": 70.62,
+      "win_rate": 100.0
+    },
+    "americanfootball_nfl": {
+      "total": 2,
+      "wins": 2,
+      "losses": 0,
+      "profit": 0.74,
+      "win_rate": 100.0
+    }
+  },
+  "by_market": {
+    "h2h,spreads,totals": {
+      "total": 6,
+      "wins": 6,
+      "losses": 0,
+      "profit": 0.48,
+      "win_rate": 100.0
+    },
+    "spreads": {
+      "total": 4,
+      "wins": 4,
+      "losses": 0,
+      "profit": 69.85,
+      "win_rate": 100.0
+    },
+    "totals": {
+      "total": 2,
+      "wins": 2,
+      "losses": 0,
+      "profit": 1.51,
+      "win_rate": 100.0
+    }
+  },
+  "recent_bets": [
+    {
+      "timestamp": "2025-11-20 15:40:53",
+      "match": "Utah Mammoth vs Vegas Golden Knights",
+      "sport": "icehockey_nhl",
+      "market": "totals",
+      "region": "",
+      "bookmaker_1": "",
+      "odds_1": "",
+      "stake_1": "",
+      "bookmaker_2": "",
+      "odds_2": "",
+      "stake_2": "",
+      "profit": "0.87",
+      "result": "win",
+      "bankroll_after": "129.99",
+      "margin_percent": "2.68",
+      "start_time": "2025-11-21T02:10:00Z"
+    },
+    {
+      "timestamp": "2025-11-20 15:40:54",
+      "match": "San Jose Sharks vs Los Angeles Kings",
+      "sport": "icehockey_nhl",
+      "market": "totals",
+      "region": "",
+      "bookmaker_1": "",
+      "odds_1": "",
+      "stake_1": "",
+      "bookmaker_2": "",
+      "odds_2": "",
+      "stake_2": "",
+      "profit": "0.64",
+      "result": "win",
+      "bankroll_after": "130.84",
+      "margin_percent": "2.44",
+      "start_time": "2025-11-21T03:10:00Z"
+    },
+    {
+      "timestamp": "2025-11-20 15:40:56",
+      "match": "Pittsburgh Penguins vs Minnesota Wild",
+      "sport": "icehockey_nhl",
+      "market": "spreads",
+      "region": "",
+      "bookmaker_1": "",
+      "odds_1": "",
+      "stake_1": "",
+      "bookmaker_2": "",
+      "odds_2": "",
+      "stake_2": "",
+      "profit": "39.11",
+      "result": "win",
+      "bankroll_after": "131.45",
+      "margin_percent": "37.4",
+      "start_time": "2025-11-22T00:00:00Z"
+    },
+    {
+      "timestamp": "2025-11-20 15:40:57",
+      "match": "Kansas City Chiefs vs Indianapolis Colts",
+      "sport": "americanfootball_nfl",
+      "market": "spreads",
+      "region": "",
+      "bookmaker_1": "",
+      "odds_1": "",
+      "stake_1": "",
+      "bookmaker_2": "",
+      "odds_2": "",
+      "stake_2": "",
+      "profit": "0.0",
+      "result": "win",
+      "bankroll_after": "170.55",
+      "margin_percent": "0.25",
+      "start_time": "2025-11-23T18:00:00Z"
+    },
+    {
+      "timestamp": "2025-11-20 15:40:58",
+      "match": "Los Angeles Rams vs Tampa Bay Buccaneers",
+      "sport": "americanfootball_nfl",
+      "market": "spreads",
+      "region": "",
+      "bookmaker_1": "",
+      "odds_1": "",
+      "stake_1": "",
+      "bookmaker_2": "",
+      "odds_2": "",
+      "stake_2": "",
+      "profit": "0.74",
+      "result": "win",
+      "bankroll_after": "170.55",
+      "margin_percent": "2.89",
+      "start_time": "2025-11-24T01:20:00Z"
+    }
+  ],
+  "generated_at": "2025-11-21T19:59:15.543584"
+}

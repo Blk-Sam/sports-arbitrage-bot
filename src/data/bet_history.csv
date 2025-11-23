@@ -5,3 +5,9 @@ timestamp,match,sport,market,region,bookmaker_1,odds_1,stake_1,bookmaker_2,odds_
 2025-11-18 16:20:55,Northwestern Wildcats vs Minnesota Golden Gophers,americanfootball_ncaaf,"h2h,spreads,totals",,betonlineag,1.6090799561088087,4.793577981651376,betway,2.749369384434396,2.806422018348624,0.11,win,100.11,1.52,2025-11-22T17:00:00Z
 2025-11-18 16:31:16,Atlanta Hawks vs Detroit Pistons,basketball_nba,"h2h,spreads,totals",,sportsbet,2.1581116321046414,3.1676904176904177,pinnacle,1.9095371565264847,3.5823095823095823,0.09,win,100.09,1.35,2025-11-19T01:10:00Z
 2025-11-18 16:31:21,Northwestern Wildcats vs Minnesota Golden Gophers,americanfootball_ncaaf,"h2h,spreads,totals",,betonlineag,1.6090345937423431,4.797711461766224,betway,2.747341679175896,2.8088419830704074,0.11,win,100.20,1.52,2025-11-22T17:00:00Z
+2025-11-20 15:40:52,Toronto Maple Leafs vs Columbus Blue Jackets,icehockey_nhl,spreads,,,,,,,,30.0,win,100.00,37.98,2025-11-21T00:10:00Z
+2025-11-20 15:40:53,Utah Mammoth vs Vegas Golden Knights,icehockey_nhl,totals,,,,,,,,0.87,win,129.99,2.68,2025-11-21T02:10:00Z
+2025-11-20 15:40:54,San Jose Sharks vs Los Angeles Kings,icehockey_nhl,totals,,,,,,,,0.64,win,130.84,2.44,2025-11-21T03:10:00Z
+2025-11-20 15:40:56,Pittsburgh Penguins vs Minnesota Wild,icehockey_nhl,spreads,,,,,,,,39.11,win,131.45,37.4,2025-11-22T00:00:00Z
+2025-11-20 15:40:57,Kansas City Chiefs vs Indianapolis Colts,americanfootball_nfl,spreads,,,,,,,,0.0,win,170.55,0.25,2025-11-23T18:00:00Z
+2025-11-20 15:40:58,Los Angeles Rams vs Tampa Bay Buccaneers,americanfootball_nfl,spreads,,,,,,,,0.74,win,170.55,2.89,2025-11-24T01:20:00Z
