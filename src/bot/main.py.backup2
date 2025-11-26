@@ -1,0 +1,1109 @@
+import os
+import sys
+import csv
+import random
+import time
+import logging
+import aiohttp
+import asyncio
+import argparse
+from dotenv import load_dotenv
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
+from typing import List, Dict, Any, Optional
+import pandas as pd
+
+
+from src.bot.profit_tracker import log_bet
+from src.reporting.reporting import run_report
+from src.bot.arbitrage_detector import ArbitrageDetector
+from src.bot.data_collector import OddsDataCollector
+from src.bot.api_key_manager import APIKeyManager
+from src.bot.adaptive_poller import AdaptivePoller, RateLimiter
+
+
+# Import new Telegram notifications module
+from src.notifications.telegram_notifications import (
+    send_arbitrage_alert,
+    send_error_alert,
+    send_startup_notification,
+    send_shutdown_notification,
+    send_telegram_message as send_telegram_msg,
+    send_bet_placed_alert,
+    send_arbitrage_complete_alert,
+    send_bet_failed_alert
+)
+
+# Import backup manager functions
+from src.bot.backup_manager import backup_on_startup, backup_on_shutdown
+from src.notifications.telegram_notifications import send_backup_notification
+
+
+# === CLI ARGUMENTS & CONFIGURATION ===
+parser = argparse.ArgumentParser(description="Arbitrage Bot Main Runner")
+parser.add_argument("--debug", action="store_true", help="Enable verbose debug logs")
+parser.add_argument("--simulate", action="store_true", help="Run in simulation mode")
+parser.add_argument("--bankroll", type=float, help="Override start bankroll")
+parser.add_argument("--config", type=str, help="Path to .env for custom config load")
+parser.add_argument("--dry-run", action="store_true", help="Dry run - no bets placed, no logging")
+args = parser.parse_args()
+
+
+if args.config:
+    load_dotenv(args.config)
+else:
+    load_dotenv('config/.env')
+
+
+LOG_LEVEL = "DEBUG" if args.debug else os.getenv("LOG_LEVEL", "INFO")
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler('logs/arbitrage_bot.log', mode='a'),
+        logging.StreamHandler()
+    ]
+)
+
+
+logger = logging.getLogger(__name__)
+
+
+# === ENVIRONMENT VARIABLES ===
+ODDS_API_KEYS = os.getenv("ODDS_API_KEYS", "")
+MAX_API_CALLS = int(os.getenv("MAX_API_CALLS", 500))
+DEMO_MAX_API_CALLS = int(os.getenv("DEMO_MAX_API_CALLS", 2000))
+DEMO_PHASE_ENABLED = os.getenv("DEMO_PHASE_ENABLED", "0") == "1"
+
+
+api_key_mgr = APIKeyManager(
+    max_calls=MAX_API_CALLS,
+    demo_max_calls=DEMO_MAX_API_CALLS,
+    demo_phase_enabled=DEMO_PHASE_ENABLED
+)
+
+
+SIM_LOG_FILE = os.getenv("SIM_LOG_FILE", "data/simulation_log.csv")
+BET_HISTORY_FILE = os.getenv("BET_HISTORY_FILE", "data/bet_history.csv")
+MANUAL_PNL_FILE = os.getenv("MANUAL_PNL_FILE", "data/manual_pnl.csv")
+DATA_DIR = os.getenv("DASHBOARD_DATA_DIR", "data")
+START_BANKROLL = Decimal("100")  # FIXED: Always start with $100 in simulation
+SPORTS_TO_SCAN = [s.strip() for s in os.getenv("SPORTS_TO_SCAN", "basketball_nba").split(",")]
+MARKETS_TO_SCAN = [m.strip() for m in os.getenv("MARKETS", "h2h").split(",") if m.strip()]
+SLIPPAGE = Decimal(os.getenv("SLIPPAGE", "0.001"))
+MIN_MARGIN = Decimal(os.getenv("MIN_MARGIN", "0.01"))
+MAX_STAKE_PER_ARB = Decimal(os.getenv("MAX_STAKE_PER_ARB", "0.5"))
+SIMULATE_BET_PLACEMENT = args.simulate or bool(int(os.getenv("SIMULATE_BET_PLACEMENT", "1")))
+API_RETRIES = int(os.getenv("API_RETRIES", 3))
+API_RETRY_BACKOFF = int(os.getenv("API_RETRY_BACKOFF", 8))
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+ALBERTA_BOOKS = set([b.strip().lower().replace("_", "").replace(" ", "") for b in os.getenv("BOOKMAKERS", "").split(",") if b.strip()])
+DRY_RUN = args.dry_run
+BOT_VERSION = os.getenv("BOT_VERSION", "2.0.0")
+
+
+# === MANUAL P&L INTEGRATION ===
+class ManualPnLAnalyzer:
+    """
+    Analyzes manual P&L data to inform bot strategy and improve decision-making.
+    """
+    
+    def __init__(self, manual_pnl_file: str):
+        self.manual_pnl_file = manual_pnl_file
+        self.data = self.load_manual_pnl()
+        self.insights = self.analyze_manual_data()
+    
+    def load_manual_pnl(self) -> Optional[pd.DataFrame]:
+        """Load manual P&L CSV file."""
+        if not os.path.exists(self.manual_pnl_file):
+            logger.info("No manual P&L file found - using defaults")
+            return None
+        
+        try:
+            df = pd.read_csv(self.manual_pnl_file)
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            logger.info(f"✅ Loaded {len(df)} manual bet records from {self.manual_pnl_file}")
+            return df
+        except Exception as e:
+            logger.error(f"Error loading manual P&L: {e}")
+            return None
+    
+    def analyze_manual_data(self) -> Dict[str, Any]:
+        """Analyze manual P&L data to extract actionable insights."""
+        if self.data is None or self.data.empty:
+            return self.get_default_insights()
+        
+        df = self.data
+        
+        # Overall stats
+        total_bets = len(df)
+        wins = len(df[df['result'] == 'Win'])
+        losses = len(df[df['result'] == 'Loss'])
+        win_rate = (wins / total_bets * 100) if total_bets > 0 else 0
+        avg_profit = df['profit_loss'].mean()
+        total_profit = df['profit_loss'].sum()
+        
+        # Sport-specific performance
+        sport_performance = df.groupby('sport').agg({
+            'profit_loss': ['sum', 'mean', 'count'],
+            'result': lambda x: (x == 'Win').sum() / len(x) * 100 if len(x) > 0 else 0
+        }).to_dict()
+        
+        # Market-specific performance
+        market_performance = df.groupby('market').agg({
+            'profit_loss': ['sum', 'mean', 'count'],
+            'result': lambda x: (x == 'Win').sum() / len(x) * 100 if len(x) > 0 else 0
+        }).to_dict()
+        
+        # Bookmaker-specific performance
+        bookmaker_performance = df.groupby('bookmaker').agg({
+            'profit_loss': ['sum', 'mean', 'count'],
+            'result': lambda x: (x == 'Win').sum() / len(x) * 100 if len(x) > 0 else 0
+        }).to_dict()
+        
+        # Risk metrics
+        max_loss = df['profit_loss'].min()
+        max_win = df['profit_loss'].max()
+        
+        insights = {
+            'total_bets': total_bets,
+            'win_rate': win_rate,
+            'avg_profit': avg_profit,
+            'total_profit': total_profit,
+            'sport_performance': sport_performance,
+            'market_performance': market_performance,
+            'bookmaker_performance': bookmaker_performance,
+            'max_loss': max_loss,
+            'max_win': max_win,
+            'avg_stake': df['stake'].mean() if 'stake' in df.columns else 0,
+            'profitable_sports': self.get_profitable_categories(df, 'sport'),
+            'profitable_markets': self.get_profitable_categories(df, 'market'),
+            'profitable_bookmakers': self.get_profitable_categories(df, 'bookmaker'),
+        }
+        
+        logger.info(f"📊 Manual P&L Insights:")
+        logger.info(f"   Win Rate: {win_rate:.1f}% ({wins}W / {losses}L)")
+        logger.info(f"   Avg Profit: ${avg_profit:.2f}")
+        logger.info(f"   Total Profit: ${total_profit:.2f}")
+        logger.info(f"   Best Sports: {insights['profitable_sports']}")
+        logger.info(f"   Best Markets: {insights['profitable_markets']}")
+        
+        return insights
+    
+    def get_profitable_categories(self, df: pd.DataFrame, column: str) -> List[str]:
+        """Get categories (sports/markets/bookmakers) that are profitable."""
+        if column not in df.columns:
+            return []
+        
+        category_profit = df.groupby(column)['profit_loss'].sum()
+        profitable = category_profit[category_profit > 0].sort_values(ascending=False)
+        return profitable.index.tolist()[:5]  # Top 5
+    
+    def get_default_insights(self) -> Dict[str, Any]:
+        """Return default insights when no manual data available."""
+        return {
+            'total_bets': 0,
+            'win_rate': 0,
+            'avg_profit': 0,
+            'total_profit': 0,
+            'sport_performance': {},
+            'market_performance': {},
+            'bookmaker_performance': {},
+            'max_loss': 0,
+            'max_win': 0,
+            'avg_stake': 0,
+            'profitable_sports': [],
+            'profitable_markets': [],
+            'profitable_bookmakers': [],
+        }
+    
+    def should_bet_on_sport(self, sport: str) -> bool:
+        """Determine if bot should place bets on a given sport based on manual history."""
+        if not self.insights['profitable_sports']:
+            return True  # No data, allow all
+        
+        # If sport is in profitable list or no negative history, allow
+        return sport in self.insights['profitable_sports'] or self.insights['total_bets'] < 10
+    
+    def should_bet_on_market(self, market: str) -> bool:
+        """Determine if bot should place bets on a given market based on manual history."""
+        if not self.insights['profitable_markets']:
+            return True  # No data, allow all
+        
+        return market in self.insights['profitable_markets'] or self.insights['total_bets'] < 10
+    
+    def get_adjusted_min_margin(self, base_margin: Decimal) -> Decimal:
+        """
+        Adjust minimum margin threshold based on manual P&L performance.
+        If user is losing, increase margin requirement to be more selective.
+        """
+        if self.insights['total_bets'] < 5:
+            return base_margin  # Not enough data
+        
+        win_rate = self.insights['win_rate']
+        
+        # If win rate is low, increase margin requirement
+        if win_rate < 40:
+            adjusted = base_margin * Decimal("1.5")
+            logger.info(f"⚠️ Low win rate ({win_rate:.1f}%) - increasing margin to {adjusted:.4f}")
+            return adjusted
+        elif win_rate < 50:
+            adjusted = base_margin * Decimal("1.2")
+            logger.info(f"📊 Moderate win rate ({win_rate:.1f}%) - increasing margin to {adjusted:.4f}")
+            return adjusted
+        else:
+            logger.info(f"✅ Good win rate ({win_rate:.1f}%) - keeping margin at {base_margin:.4f}")
+            return base_margin
+    
+    def get_current_bankroll(self, default: Decimal) -> Decimal:
+        """Get current bankroll from manual P&L or use default."""
+        if self.data is None or self.data.empty:
+            return default
+        
+        try:
+            latest_bankroll = self.data['bankroll'].iloc[-1]
+            logger.info(f"💰 Using manual P&L bankroll: ${latest_bankroll:.2f}")
+            return Decimal(str(latest_bankroll))
+        except Exception as e:
+            logger.warning(f"Could not read manual bankroll: {e}")
+            return default
+
+
+def demo_cap_reached() -> bool:
+    """
+    Check if demo API cap has been reached.
+    
+    Returns:
+        True if cap reached, False otherwise
+    """
+    if api_key_mgr.is_demo_cap_reached():
+        logger.warning(f"Demo API cap reached: {api_key_mgr.total_calls}/{api_key_mgr.demo_max_api_calls}")
+        send_error_alert(
+            "API Quota Exhausted",
+            f"Demo API cap reached: {api_key_mgr.total_calls}/{api_key_mgr.demo_max_api_calls}",
+            "critical"
+        )
+        return True
+    return False
+
+
+def notify_quota_warning() -> None:
+    """Send quota warning notifications via Telegram."""
+    warning_msgs = api_key_mgr.check_api_quota()
+    if warning_msgs:
+        for msg in warning_msgs:
+            send_error_alert("API Quota Warning", msg, "warning")
+
+
+class BetExecutor:
+    """
+    Handles bet placement in both simulation and live modes with liquidity checks.
+    """
+    
+    def __init__(self, simulate: bool = True):
+        self.simulate = simulate
+        self.bookmaker_balances = {bm: Decimal("1000") for bm in ALBERTA_BOOKS}
+        self.bets_placed = 0
+        self.bets_rejected = 0
+    
+    def can_place(self, bookmaker: str, stake: float) -> bool:
+        """
+        Check if bet can be placed based on liquidity.
+        
+        Args:
+            bookmaker: Bookmaker key
+            stake: Stake amount
+            
+        Returns:
+            True if bet can be placed, False otherwise
+        """
+        if not self.simulate:
+            balance = self.bookmaker_balances.get(bookmaker, Decimal("0"))
+            if Decimal(str(stake)) > balance:
+                logger.warning(f"Liquidity Issue: Stake ${stake} exceeds ${balance} at {bookmaker}")
+                self.bets_rejected += 1
+                return False
+        return True
+    
+    async def place_bet(self, bookmaker: str, stake: float, odds: float) -> bool:
+        """
+        Place a bet (simulated or live).
+        
+        Args:
+            bookmaker: Bookmaker key
+            stake: Stake amount
+            odds: Odds value
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.can_place(bookmaker, stake):
+            return False
+        
+        if DRY_RUN:
+            logger.info(f"[DRY RUN] Would place bet with {bookmaker}: ${stake} @ {odds}")
+            return True
+        
+        if self.simulate:
+            logger.debug(f"[SIM] Bet with {bookmaker}: Stake ${stake}, Odds {odds}")
+            self.bets_placed += 1
+            return True
+        
+        self.bookmaker_balances[bookmaker] -= Decimal(str(stake))
+        logger.info(f"[LIVE] Bet placed with {bookmaker}: Stake ${stake}, Odds {odds}")
+        self.bets_placed += 1
+        return True
+    
+    def get_stats(self) -> Dict[str, int]:
+        """Get betting statistics."""
+        return {
+            "bets_placed": self.bets_placed,
+            "bets_rejected": self.bets_rejected
+        }
+
+
+class BankrollManager:
+    """
+    Manages bankroll with Kelly Criterion stake calculation.
+    """
+    
+    def __init__(self, starting_bankroll: Decimal):
+        self.bankroll = Decimal(starting_bankroll)
+        self.start_bankroll = Decimal(starting_bankroll)
+        self.bets_placed = 0
+        self.total_profit = Decimal("0")
+        self.max_stake_per_arb = MAX_STAKE_PER_ARB
+        self.peak_bankroll = Decimal(starting_bankroll)
+        self.max_drawdown = Decimal("0")
+    
+    def calculate_kelly_stake(self, margin: Decimal, max_fraction: Optional[Decimal] = None) -> Decimal:
+        """
+        Calculate stake using Kelly Criterion.
+        
+        Args:
+            margin: Profit margin
+            max_fraction: Optional maximum stake fraction
+            
+        Returns:
+            Stake amount
+        """
+        if max_fraction is None:
+            max_fraction = self.max_stake_per_arb
+        stake_fraction = min(margin * Decimal("10"), max_fraction)
+        return self.bankroll * stake_fraction
+    
+    def update(self, profit: Decimal) -> None:
+        """
+        Update bankroll after bet result.
+        
+        Args:
+            profit: Profit/loss from bet
+        """
+        self.bankroll += Decimal(profit)
+        self.total_profit += Decimal(profit)
+        self.bets_placed += 1
+        
+        # Track drawdown
+        if self.bankroll > self.peak_bankroll:
+            self.peak_bankroll = self.bankroll
+        else:
+            current_drawdown = self.peak_bankroll - self.bankroll
+            if current_drawdown > self.max_drawdown:
+                self.max_drawdown = current_drawdown
+    
+    def get_stats(self) -> Dict[str, float]:
+        """Get comprehensive bankroll statistics."""
+        if self.start_bankroll > 0:
+            roi = ((self.bankroll - self.start_bankroll) / self.start_bankroll * 100)
+        else:
+            roi = 0.0
+        
+        return {
+            'current': float(self.bankroll),
+            'start': float(self.start_bankroll),
+            'profit': float(self.total_profit),
+            'roi': float(roi),
+            'bets': self.bets_placed,
+            'peak': float(self.peak_bankroll),
+            'max_drawdown': float(self.max_drawdown)
+        }
+
+
+def calculate_arbitrage_stakes(
+    outcome_odds: List[float],
+    bankroll: Decimal,
+    max_stake: Decimal
+) -> tuple[Optional[List[float]], Optional[List[float]], Optional[float], Optional[float]]:
+    """
+    Calculate stakes for arbitrage opportunity.
+    
+    Args:
+        outcome_odds: List of odds for each outcome
+        bankroll: Available bankroll
+        max_stake: Maximum stake allowed
+        
+    Returns:
+        Tuple of (stakes, payouts, guaranteed_profit, margin)
+    """
+    try:
+        odds = [Decimal(str(od)) for od in outcome_odds]
+        bankroll = Decimal(str(bankroll))
+        max_stake = Decimal(str(max_stake))
+    except InvalidOperation:
+        logger.error("Non-decimal input for calculate_arbitrage_stakes")
+        return None, None, None, None
+    
+    implied_prob = sum(1 / od for od in odds)
+    if implied_prob >= 1:
+        return None, None, None, None
+    
+    margin = (1 - implied_prob)
+    total_stake = min(bankroll, max_stake)
+    stakes = [total_stake / len(odds) for _ in odds]
+    payout = [stakes[i] * odds[i] for i in range(len(stakes))]
+    guaranteed_profit = min(payout) - total_stake
+    
+    return [float(st) for st in stakes], [float(pa) for pa in payout], float(guaranteed_profit), float(margin)
+
+
+def simulate_bet_execution(
+    stakes: List[float],
+    odds: List[float],
+    slippage: Decimal
+) -> tuple[float, List[float]]:
+    """
+    Simulate bet execution with slippage.
+    
+    Args:
+        stakes: List of stake amounts
+        odds: List of odds
+        slippage: Slippage factor
+        
+    Returns:
+        Tuple of (actual_profit, actual_odds)
+    """
+    odds = [Decimal(str(od)) for od in odds]
+    slippage_factor = Decimal(str(slippage))
+    actual_odds = [od * (1 - Decimal(str(random.uniform(0, float(slippage_factor))))) for od in odds]
+    payout = [Decimal(str(st)) * actual_odds[i] for i, st in enumerate(stakes)]
+    guaranteed_payout = min(payout)
+    total_stake = sum([Decimal(str(st)) for st in stakes])
+    profit = guaranteed_payout - total_stake
+    return float(profit), [float(od) for od in actual_odds]
+
+
+def filter_valid_bookmakers(bookmakers: List[Dict], valid_set: set) -> List[Dict]:
+    """
+    Filter bookmakers to only include valid ones.
+    
+    Args:
+        bookmakers: List of bookmaker dictionaries
+        valid_set: Set of valid bookmaker keys
+        
+    Returns:
+        Filtered list of bookmakers
+    """
+    def normalize(name: str) -> str:
+        return name.replace("_", "").replace(" ", "").lower()
+    
+    normalized_valid = {normalize(book) for book in valid_set}
+    return [
+        bm for bm in bookmakers
+        if normalize(bm.get('key', '')) in normalized_valid
+    ]
+
+
+def get_best_arbitrage(arbs: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """
+    Get arbitrage opportunity with highest profit margin.
+    
+    Args:
+        arbs: List of arbitrage opportunities
+        
+    Returns:
+        Best arbitrage opportunity or None
+    """
+    if not arbs:
+        return None
+    return max(arbs, key=lambda x: x.get('percent_profit', 0))
+
+
+async def fetch_odds_batch(
+    collector: OddsDataCollector,
+    sport: str,
+    bookmakers_str: str,
+    markets_str: str
+) -> List[Dict]:
+    """
+    Fetch odds data asynchronously for a sport.
+    
+    Args:
+        collector: OddsDataCollector instance
+        sport: Sport key
+        bookmakers_str: Comma-separated bookmakers
+        markets_str: Comma-separated markets
+        
+    Returns:
+        List of parsed odds data
+    """
+    loop = asyncio.get_event_loop()
+    raw_odds = await loop.run_in_executor(
+        None, collector.fetch_odds,
+        sport, None, markets_str, bookmakers_str, API_RETRIES, API_RETRY_BACKOFF
+    )
+    odds_data = collector.parse_odds_response(raw_odds)
+    notify_quota_warning()
+    return odds_data
+
+
+def write_csv_entry(log_file: str, entry: dict) -> None:
+    """
+    Write entry to CSV log file.
+    
+    Args:
+        log_file: Path to log file
+        entry: Dictionary with entry data
+    """
+    if DRY_RUN:
+        logger.info(f"[DRY RUN] Would write to {log_file}: {entry}")
+        return
+    
+    file_exists = os.path.isfile(log_file)
+    try:
+        with open(log_file, "a", newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=entry.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(entry)
+    except Exception as e:
+        logger.error(f"Error writing CSV entry: {e}")
+
+
+async def process_arbitrage_with_notifications(
+    best_arb: Dict[str, Any],
+    stakes: List[float],
+    odds: List[float],
+    profit: float,
+    sport: str,
+    bet_exec: BetExecutor,
+    bankroll_mgr: BankrollManager
+) -> Dict[str, Any]:
+    """
+    Process arbitrage opportunity with bet placement notifications.
+    
+    Args:
+        best_arb: Arbitrage opportunity details
+        stakes: Calculated stakes
+        odds: Odds for each outcome
+        profit: Expected profit
+        sport: Sport key
+        bet_exec: BetExecutor instance
+        bankroll_mgr: BankrollManager instance
+        
+    Returns:
+        Bet entry dictionary
+    """
+    team_names = list(best_arb.get('outcomes').keys())
+    home_team = best_arb['home_team']
+    away_team = best_arb['away_team']
+    game_time = best_arb.get('commence_time', '')
+    
+    # Generate arbitrage ID
+    arb_id = f"ARB-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+    
+    placed_bets = []
+    total_bets = len(team_names)
+    
+    logger.info(f"\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    logger.info(f"🎯 Processing arbitrage {arb_id}")
+    logger.info(f"📊 {total_bets} bets | Expected profit: ${profit:.2f}")
+    logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    # Place each bet with notifications
+    for idx, team in enumerate(team_names):
+        bm = best_arb.get('bookmakers', {}).get(team, "N/A")
+        stake = stakes[idx]
+        odd = odds[idx]
+        
+        logger.info(f"📍 [{idx+1}/{total_bets}] Placing bet: ${stake:.2f} on {team} @ {bm}")
+        
+        # Determine next bet info
+        next_bet_info = {}
+        if idx < total_bets - 1:
+            next_team = team_names[idx + 1]
+            next_bet_info = {
+                'bookmaker': best_arb.get('bookmakers', {}).get(next_team, 'Unknown'),
+                'selection': next_team,
+                'stake': stakes[idx + 1]
+            }
+        
+        # Place bet
+        success = await bet_exec.place_bet(bm, stake, odd)
+        
+        if not success:
+            logger.error(f"❌ Failed to place bet {idx+1}/{total_bets}")
+            
+            # Send failure notification
+            send_bet_failed_alert(
+                bet_details={
+                    'bookmaker': bm,
+                    'selection': team,
+                    'stake': stake,
+                    'home_team': home_team,
+                    'away_team': away_team
+                },
+                reason="Liquidity check failed" if not bet_exec.simulate else "Placement error",
+                bet_number=idx + 1,
+                total_bets=total_bets
+            )
+            break
+        
+        # Send individual bet notification
+        bet_details = {
+            'bookmaker': bm,
+            'selection': team,
+            'stake': stake,
+            'odds': odd,
+            'sport': sport,
+            'home_team': home_team,
+            'away_team': away_team,
+            'game_time': game_time,
+            'next_bet': next_bet_info,
+            'guaranteed_profit': profit
+        }
+        
+        send_bet_placed_alert(
+            bet_details=bet_details,
+            bet_number=idx + 1,
+            total_bets=total_bets,
+            arb_id=arb_id,
+            is_simulation=SIMULATE_BET_PLACEMENT
+        )
+        
+        placed_bets.append({
+            'bookmaker': bm,
+            'selection': team,
+            'stake': stake,
+            'odds': odd
+        })
+        
+        logger.info(f"✅ [{idx+1}/{total_bets}] Bet placed successfully")
+        
+        # Small delay between bets
+        await asyncio.sleep(random.uniform(0.3, 0.8))
+    
+    # If all bets placed, send completion notification
+    if len(placed_bets) == total_bets:
+        total_stake = sum(stakes)
+        returns = [stake * odd for stake, odd in zip(stakes, odds)]
+        guaranteed_return = min(returns)
+        roi = (profit / total_stake * 100) if total_stake > 0 else 0
+        
+        arb_summary = {
+            'home_team': home_team,
+            'away_team': away_team,
+            'sport': sport,
+            'game_time': game_time,
+            'bets': placed_bets,
+            'total_stake': total_stake,
+            'guaranteed_return': guaranteed_return,
+            'guaranteed_profit': profit,
+            'roi': roi
+        }
+        
+        send_arbitrage_complete_alert(
+            arb_summary=arb_summary,
+            is_simulation=SIMULATE_BET_PLACEMENT
+        )
+        
+        logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        logger.info(f"🎉 All {total_bets} bets placed for {arb_id}")
+        logger.info(f"💰 Guaranteed profit: ${profit:.2f} ({roi:.2f}% ROI)")
+        logger.info(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    
+    # Calculate margin
+    margin = profit / sum(stakes) if sum(stakes) > 0 else 0
+    
+    # Create bet entry
+    bet_entry = {
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'match': f"{home_team} vs {away_team}",
+        'sport': sport,
+        'market': best_arb['market'],
+        'bookmakers': str(best_arb.get('bookmakers', {})),
+        'outcomes': str(best_arb.get('outcomes', {})),
+        'stakes': str(stakes),
+        'odds': str(odds),
+        'profit': round(profit, 2),
+        'result': 'win' if profit > 0 else 'loss',
+        'bankroll_after': round(bankroll_mgr.bankroll, 2),
+        'margin_percent': round(margin * 100, 2),
+        'start_time': game_time
+    }
+    
+    return bet_entry
+
+
+async def main():
+    """Main bot execution function."""
+    if demo_cap_reached():
+        logger.info("Aborting: demo API cap reached")
+        return
+    
+    # === STARTUP BACKUP ===
+    logger.info("\n" + "=" * 70)
+    logger.info("💾 CREATING STARTUP BACKUP")
+    logger.info("=" * 70)
+    
+    try:
+        backup_path = backup_on_startup()
+        if backup_path:
+            backup_size_mb = os.path.getsize(backup_path) / (1024 * 1024)
+            logger.info(f"✅ Startup backup created: {backup_path} ({backup_size_mb:.2f} MB)")
+            send_backup_notification(backup_path, "startup", backup_size_mb)
+        else:
+            logger.warning("⚠️ Startup backup failed (non-critical)")
+    except Exception as e:
+        logger.warning(f"⚠️ Startup backup error (non-critical): {e}")
+    
+    logger.info("=" * 70)
+    
+    # === MANUAL P&L INTEGRATION ===
+    logger.info("\n" + "=" * 70)
+    logger.info("📊 LOADING MANUAL P&L DATA FOR ADAPTIVE LEARNING")
+    logger.info("=" * 70)
+    
+    manual_pnl_analyzer = ManualPnLAnalyzer(os.path.join(DATA_DIR, MANUAL_PNL_FILE))
+    
+    # Adjust strategy based on manual P&L
+    adaptive_min_margin = manual_pnl_analyzer.get_adjusted_min_margin(MIN_MARGIN)
+    
+    # Use manual bankroll if available, otherwise default to $100
+    adaptive_start_bankroll = START_BANKROLL  # Always $100 for simulation
+    
+    logger.info("=" * 70)
+    logger.info("Starting Async Arbitrage Bot")
+    logger.info(f"Mode: {'DRY RUN' if DRY_RUN else 'SIMULATION' if SIMULATE_BET_PLACEMENT else 'LIVE'}")
+    logger.info(f"Bankroll: ${adaptive_start_bankroll}")
+    logger.info(f"Adaptive Min Margin: {adaptive_min_margin:.4f} (Base: {MIN_MARGIN:.4f})")
+    logger.info(f"Sports: {', '.join(SPORTS_TO_SCAN)}")
+    logger.info(f"Markets: {', '.join(MARKETS_TO_SCAN)}")
+    logger.info("=" * 70)
+    
+    # === ADAPTIVE POLLER SETUP ===
+    logger.info("\n" + "=" * 70)
+    logger.info("⚙️  INITIALIZING ADAPTIVE POLLER & RATE LIMITER")
+    logger.info("=" * 70)
+    
+    adaptive_poller = AdaptivePoller(
+        api_key_manager=api_key_mgr,
+        manual_pnl_analyzer=manual_pnl_analyzer,
+        base_interval=int(os.getenv("BASE_RUN_INTERVAL", "120")),
+        peak_hours=(int(os.getenv("PEAK_HOURS_START", "17")), int(os.getenv("PEAK_HOURS_END", "23"))),
+        off_peak_multiplier=float(os.getenv("OFF_PEAK_MULTIPLIER", "3.0")),
+        quota_threshold_warning=float(os.getenv("QUOTA_WARNING_THRESHOLD", "0.7")),
+        quota_threshold_critical=float(os.getenv("QUOTA_CRITICAL_THRESHOLD", "0.9"))
+    )
+    
+    rate_limiter = RateLimiter(max_calls_per_minute=int(os.getenv("MAX_CALLS_PER_MINUTE", "30")))
+    
+    # Log polling configuration
+    polling_summary = adaptive_poller.get_polling_summary()
+    logger.info(f"📊 Adaptive Polling Configuration:")
+    logger.info(f"   Peak hours: {polling_summary['is_peak_hours']}")
+    logger.info(f"   Quota usage: {polling_summary['quota_usage']}")
+    logger.info(f"   Time multiplier: {polling_summary['time_multiplier']:.1f}x")
+    logger.info(f"   Quota multiplier: {polling_summary['quota_multiplier']:.1f}x")
+    logger.info("=" * 70)
+    
+    # Send startup notification
+    send_startup_notification(
+        BOT_VERSION,
+        {
+            'simulate': SIMULATE_BET_PLACEMENT,
+            'bankroll': float(adaptive_start_bankroll),
+            'min_margin': float(adaptive_min_margin),
+            'sports': SPORTS_TO_SCAN,
+            'markets': MARKETS_TO_SCAN,
+            'manual_pnl_loaded': manual_pnl_analyzer.data is not None,
+            'manual_bets': manual_pnl_analyzer.insights['total_bets'],
+            'manual_win_rate': manual_pnl_analyzer.insights['win_rate'],
+            'adaptive_polling': True,
+            'peak_hours': polling_summary['is_peak_hours'],
+            'quota_usage': polling_summary['quota_usage']
+        }
+    )
+    
+    bet_exec = BetExecutor(simulate=SIMULATE_BET_PLACEMENT)
+    collector = OddsDataCollector(api_key_manager=api_key_mgr, logger=logger)
+    bankroll_mgr = BankrollManager(adaptive_start_bankroll)
+    arb_detector = ArbitrageDetector(markets_to_scan=MARKETS_TO_SCAN, min_margin=float(adaptive_min_margin))
+    simulation_log = []
+    arbitrage_found = 0
+    arbitrage_skipped = 0
+    
+    bookmakers_str = ",".join(ALBERTA_BOOKS)
+    markets_str = ",".join(MARKETS_TO_SCAN)
+    notified_arbs = set()
+    
+    try:
+        # Prioritize sports based on manual P&L
+        prioritized_sports = adaptive_poller.get_prioritized_sports(SPORTS_TO_SCAN)
+        
+        # Fetch odds SEQUENTIALLY with adaptive intervals (NOT concurrently)
+        for idx, sport in enumerate(prioritized_sports):
+            # === ADAPTIVE FILTER: Skip unprofitable sports ===
+            if not manual_pnl_analyzer.should_bet_on_sport(sport):
+                logger.warning(f"⏭️  Skipping {sport} - unprofitable in manual P&L history")
+                continue
+            
+            # Check if should poll this sport based on quota
+            if not adaptive_poller.should_poll_sport(sport):
+                logger.warning(f"⏭️  Skipping {sport} - quota preservation mode")
+                arbitrage_skipped += 1
+                continue
+            
+            # Get adaptive polling interval for this sport
+            poll_interval = adaptive_poller.get_adaptive_interval(sport)
+            logger.info(f"\n{'=' * 60}")
+            logger.info(f"🕐 Scanning {sport} (Priority #{idx+1}) | Interval: {poll_interval}s")
+            logger.info(f"{'=' * 60}")
+            
+            # Wait for rate limiter before API call
+            await rate_limiter.wait_if_needed()
+            
+            # Fetch odds for this sport
+            odds_data = await fetch_odds_batch(collector, sport, bookmakers_str, markets_str)
+            
+            if not odds_data:
+                logger.warning(f"No data received for {sport}/{markets_str}/{bookmakers_str}")
+                continue
+            
+            for game in odds_data:
+                if not all(k in game for k in ['id', 'home_team', 'away_team', 'bookmakers']):
+                    logger.warning(f"Game missing fields: {game}")
+                    continue
+                
+                valid_bookmakers = filter_valid_bookmakers(game.get('bookmakers', []), ALBERTA_BOOKS)
+                if len(valid_bookmakers) < 2:
+                    continue
+                
+                game_data = {
+                    'id': game.get('id'),
+                    'home_team': game.get('home_team'),
+                    'away_team': game.get('away_team'),
+                    'commence_time': game.get('commence_time'),
+                    'bookmakers': valid_bookmakers
+                }
+                
+                arb_opportunities = arb_detector.detect_arbitrage([game_data])
+                best_arb = get_best_arbitrage(arb_opportunities)
+                if not best_arb:
+                    continue
+                
+                # === ADAPTIVE FILTER: Skip unprofitable markets ===
+                if not manual_pnl_analyzer.should_bet_on_market(best_arb['market']):
+                    logger.warning(f"⏭️  Skipping {best_arb['market']} market - unprofitable in manual P&L")
+                    arbitrage_skipped += 1
+                    continue
+                
+                # Deduplication
+                arb_id = (
+                    best_arb['game_id'],
+                    best_arb['home_team'],
+                    best_arb['away_team'],
+                    tuple(sorted(best_arb.get('bookmakers', {}).items())),
+                    tuple(sorted(best_arb.get('outcomes', {}).items())),
+                    best_arb['market'],
+                )
+                if arb_id in notified_arbs:
+                    continue
+                notified_arbs.add(arb_id)
+                arbitrage_found += 1
+                
+                # Calculate stakes
+                margin_val = Decimal(str(best_arb['percent_profit'])) / Decimal("100")
+                max_stake = bankroll_mgr.calculate_kelly_stake(margin_val, MAX_STAKE_PER_ARB)
+                
+                odds = list(best_arb['outcomes'].values())
+                stakes, payouts, profit, margin = calculate_arbitrage_stakes(
+                    odds, bankroll_mgr.bankroll, max_stake
+                )
+                
+                if stakes is None or profit is None or profit <= 0:
+                    continue
+                if margin < float(adaptive_min_margin):
+                    logger.debug(f"Margin too low: {margin:.4f} < {float(adaptive_min_margin)}")
+                    arbitrage_skipped += 1
+                    continue
+                
+                # Log arbitrage found
+                team_names = list(best_arb.get('outcomes').keys())
+                logger.info(f"\n💰 ARBITRAGE FOUND!")
+                logger.info(f"Match: {best_arb['home_team']} vs {best_arb['away_team']}")
+                logger.info(f"Market: {best_arb['market']}")
+                for i, team in enumerate(team_names):
+                    logger.info(
+                        f"- {best_arb.get('bookmakers', {}).get(team, 'N/A')}: "
+                        f"Bet on {team} at odds {odds[i]:.3f} — Stake: ${stakes[i]:.2f}"
+                    )
+                logger.info(f"Expected Profit: ${profit:.2f} ({margin * 100:.2f}%)")
+                
+                # Send initial arbitrage alert
+                send_arbitrage_alert(best_arb, stakes, odds, profit)
+                
+                # Process arbitrage with bet placement notifications
+                bet_entry = await process_arbitrage_with_notifications(
+                    best_arb, stakes, odds, profit, sport, bet_exec, bankroll_mgr
+                )
+                
+                # Write to CSV
+                write_csv_entry(SIM_LOG_FILE, bet_entry)
+                
+                # Simulate execution if in simulation mode
+                if SIMULATE_BET_PLACEMENT:
+                    actual_profit, actual_odds = simulate_bet_execution(stakes, odds, SLIPPAGE)
+                    bankroll_mgr.update(actual_profit)
+                    bet_entry['sim_actual_profit'] = round(actual_profit, 2)
+                    bet_entry['sim_actual_odds'] = str(actual_odds)
+                    log_bet(bet_entry)
+                    logger.info(
+                        f"Actual Profit: ${actual_profit:.2f} | "
+                        f"Bankroll: ${bankroll_mgr.bankroll:.2f} | "
+                        f"Result: {bet_entry['result']}"
+                    )
+                
+                simulation_log.append(bet_entry)
+                await asyncio.sleep(random.uniform(0.5, 1.5))
+            
+            # Adaptive sleep between sports
+            if idx < len(prioritized_sports) - 1:  # Don't sleep after last sport
+                logger.info(f"⏱️  Adaptive sleep: {poll_interval}s before next sport")
+                await asyncio.sleep(poll_interval)
+            
+            # Check API quota after each sport
+            notify_quota_warning()
+            if collector.calls_made / collector.max_calls > 0.9:
+                logger.warning(f"API quota usage above 90%: {collector.calls_made}/{collector.max_calls}")
+                logger.warning("⚠️ Forcing extended sleep due to high quota usage")
+                await asyncio.sleep(poll_interval * 2)
+        
+        # Save simulation log
+        if simulation_log and not DRY_RUN:
+            with open(SIM_LOG_FILE, 'w', newline='') as f:
+                writer = csv.DictWriter(f, fieldnames=simulation_log[0].keys())
+                writer.writeheader()
+                writer.writerows(simulation_log)
+            logger.info(f"Simulation log saved to {SIM_LOG_FILE}")
+        
+        # Generate report
+        if not DRY_RUN:
+            try:
+                run_report(BET_HISTORY_FILE, telegram_bot_token=TELEGRAM_BOT_TOKEN, telegram_chat_id=TELEGRAM_CHAT_ID)
+            except Exception as e:
+                logger.warning(f"Could not generate report: {e}")
+                send_error_alert("Report Generation", str(e), "warning")
+        
+        # Final statistics
+        logger.info("\n" + "=" * 70)
+        logger.info("RUN COMPLETE")
+        logger.info("=" * 70)
+        
+        bankroll_stats = bankroll_mgr.get_stats()
+        bet_stats = bet_exec.get_stats()
+        
+        logger.info(f"Arbitrage opportunities found: {arbitrage_found}")
+        logger.info(f"Arbitrage opportunities skipped (filters): {arbitrage_skipped}")
+        logger.info(f"Bets placed: {bet_stats['bets_placed']}")
+        logger.info(f"Bets rejected: {bet_stats['bets_rejected']}")
+        logger.info(f"Starting bankroll: ${bankroll_stats['start']:.2f}")
+        logger.info(f"Final bankroll: ${bankroll_stats['current']:.2f}")
+        logger.info(f"Total profit: ${bankroll_stats['profit']:.2f}")
+        logger.info(f"ROI: {bankroll_stats['roi']:.2f}%")
+        logger.info(f"Peak bankroll: ${bankroll_stats['peak']:.2f}")
+        logger.info(f"Max drawdown: ${bankroll_stats['max_drawdown']:.2f}")
+        logger.info(f"API calls made: {api_key_mgr.total_calls}")
+        logger.info(f"Manual P&L insights applied: {manual_pnl_analyzer.insights['total_bets']} historical bets")
+        
+        # Send summary
+        summary_msg = (
+            f"✅ *Bot Run Complete*\n\n"
+            f"📊 Arbitrages Found: {arbitrage_found}\n"
+            f"⏭️  Skipped (Filters): {arbitrage_skipped}\n"
+            f"💰 Profit: ${bankroll_stats['profit']:.2f}\n"
+            f"📈 ROI: {bankroll_stats['roi']:.2f}%\n"
+            f"🏦 Bankroll: ${bankroll_stats['current']:.2f}\n"
+            f"📞 API Calls: {api_key_mgr.total_calls}\n"
+            f"🧠 Manual Bets Learned: {manual_pnl_analyzer.insights['total_bets']}"
+        )
+        send_telegram_msg(summary_msg)
+        
+        # === SHUTDOWN BACKUP ===
+        logger.info("\n" + "=" * 70)
+        logger.info("💾 CREATING SHUTDOWN BACKUP")
+        logger.info("=" * 70)
+        
+        try:
+            backup_path = backup_on_shutdown()
+            if backup_path:
+                backup_size_mb = os.path.getsize(backup_path) / (1024 * 1024)
+                logger.info(f"✅ Shutdown backup created: {backup_path} ({backup_size_mb:.2f} MB)")
+                send_backup_notification(backup_path, "shutdown", backup_size_mb)
+            else:
+                logger.warning("⚠️ Shutdown backup failed (non-critical)")
+        except Exception as e:
+            logger.warning(f"⚠️ Shutdown backup error (non-critical): {e}")
+        
+        logger.info("=" * 70)
+        
+        # Send shutdown notification
+        send_shutdown_notification(
+            "Normal completion",
+            {
+                'opportunities': arbitrage_found,
+                'total_profit': bankroll_stats['profit'],
+                'uptime': 'N/A'
+            }
+        )
+        
+        if demo_cap_reached():
+            logger.info("Demo API cap reached (end of run)")
+    
+    except Exception as e:
+        logger.error(f"Error during main execution: {e}", exc_info=True)
+        send_error_alert("Bot Execution Error", str(e), "critical")
+        raise
+
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+        
+        # Create backup before shutdown
+        try:
+            backup_path = backup_on_shutdown()
+            if backup_path:
+                backup_size_mb = os.path.getsize(backup_path) / (1024 * 1024)
+                send_backup_notification(backup_path, "shutdown", backup_size_mb)
+        except:
+            pass  # Don't let backup failure prevent shutdown
+        
+        send_shutdown_notification("User interrupted")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Fatal error: {e}", exc_info=True)
+        
+        # Create backup before fatal exit
+        try:
+            backup_path = backup_on_shutdown()
+            if backup_path:
+                backup_size_mb = os.path.getsize(backup_path) / (1024 * 1024)
+                send_backup_notification(backup_path, "shutdown", backup_size_mb)
+        except:
+            pass  # Don't let backup failure prevent shutdown
+        
+        send_error_alert("Fatal Error", str(e), "critical")
+        sys.exit(1)

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Telegram Notifications Module - User-Friendly Messaging
 
 Provides clear, actionable, and easy-to-understand Telegram notifications
@@ -172,6 +172,14 @@ def send_arbitrage_alert(arb: Dict[str, Any], stakes: List[float],
         bookmakers_dict = arb.get('bookmakers', {})
         market = arb.get('market', 'Unknown')
         sport = arb.get('sport', 'Unknown').replace('_', ' ').title()
+        
+        # Format market display name
+        market_display_map = {
+            'h2h': 'Moneyline (H2H)',
+            'spreads': 'Spread',
+            'totals': 'Over/Under (Totals)'
+        }
+        market_display = market_display_map.get(market, market.replace('_', ' ').title())
         home_team = arb.get('home_team', 'Team A')
         away_team = arb.get('away_team', 'Team B')
         commence_time = arb.get('commence_time', '')
@@ -195,9 +203,9 @@ def send_arbitrage_alert(arb: Dict[str, Any], stakes: List[float],
         message = f"""
 {profit_emoji} *ARBITRAGE OPPORTUNITY - ACT NOW!*
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏀 {sport.upper()}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏀 {market_display}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🏟️ <b>GAME:</b>
 {home_team} vs {away_team}
@@ -343,9 +351,9 @@ def send_bet_placed_alert(
 ✅ <b>BET SUCCESSFULLY PLACED</b>
 {mode_indicator}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━
 📋 <b>BET DETAILS</b>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━━━━━━━━━━
 
 🏀 <b>Sport:</b> {sport}
 🏟️ <b>Match:</b> {home_team} vs {away_team}
@@ -629,16 +637,28 @@ def send_startup_notification(version: str, config: Dict[str, Any]) -> bool:
     """Notify that bot has started."""
     message = f"""
 
-🤑 <b>ARBITRAGE BOT STARTED</b><br>
-📊 <b>Version:</b> {version}<br>
-⚙️ <b>Mode:</b> {'🧪 SIMULATION' if config.get('simulate', True) else '🎯 LIVE TRADING'}<br>
-💰 <b>Bankroll:</b> ${config.get('bankroll', 0):.2f}<br>
-📈 <b>Min Margin:</b> {config.get('min_margin', 0)*100:.2f}%<br><br>
-⚡ <b>Sports Monitored:</b><br>
-{', '.join(config.get('sports', []))}<br>
-📊 <b>Markets:</b><br>
-{', '.join(config.get('markets', []))}<br><br>
-✅ <b>Bot is now monitoring for opportunities!</b><br>
+🤑 <b>ARBITRAGE BOT STARTED</b>
+
+📊 <b>Version:</b> {version}
+
+⚙️ <b>Mode:</b> {'🧪 SIMULATION' if config.get('simulate', True) else '🎯 LIVE TRADING'}
+
+💰 <b>Bankroll:</b> ${config.get('bankroll', 0):.2f}
+
+📈 <b>Min Margin:</b> {config.get('min_margin', 0)*100:.2f}%
+
+
+⚡ <b>Sports Monitored:</b>
+
+{', '.join(config.get('sports', []))}
+
+📊 <b>Markets:</b>
+
+{', '.join(config.get('markets', []))}
+
+
+✅ <b>Bot is now monitoring for opportunities!</b>
+
 📲 You'll receive alerts when arbitrage is detected.
 """
     
@@ -953,3 +973,4 @@ def send_backup_status_report(
     except Exception as e:
         logger.error(f"Error sending status report: {e}", exc_info=True)
         return False
+

@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-11-23T11:33:46.370689",
-  "total_api_calls": 20,
+  "timestamp": "2025-11-26T09:19:33.545902",
+  "total_api_calls": 377,
   "demo_phase": true,
   "status": "running",
   "uptime_hours": 0.0,
@@ -9,11 +9,11 @@
     "sleep_mode": {
       "enabled": true,
       "sleep_hours": "00:00-08:00",
-      "current_hour": 11,
+      "current_hour": 9,
       "is_sleeping": false,
       "wake_time": null
     },
-    "quota_usage": "1.0%",
+    "quota_usage": "18.9%",
     "time_multiplier": 3.0,
     "quota_multiplier": 1.0,
     "base_interval": 120,

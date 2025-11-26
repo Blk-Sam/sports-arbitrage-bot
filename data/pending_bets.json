@@ -1,0 +1,25 @@
+[
+  {
+    "arb_id": "2025-11-25-19-18-31",
+    "game_id": "17233f3e18774f0a1544acb5e924ed87",
+    "sport": "icehockey_nhl",
+    "home_team": "Edmonton Oilers",
+    "away_team": "Dallas Stars",
+    "commence_time": "2025-11-26T02:10:19Z",
+    "bets": [
+      {
+        "team": "Dallas Stars",
+        "stake": 25.0,
+        "odds": 2.4
+      },
+      {
+        "team": "Edmonton Oilers",
+        "stake": 25.0,
+        "odds": 2.84
+      }
+    ],
+    "expected_profit": 10.0,
+    "status": "pending",
+    "created_at": "2025-11-25T19:18:31.819255"
+  }
+]

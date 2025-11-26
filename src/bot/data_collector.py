@@ -536,7 +536,8 @@ class OddsDataCollector:
                         
                         market_entry = {
                             "key": market["key"],
-                            "outcomes": market.get("outcomes", [])
+                            "outcomes": market.get("outcomes", []),
+                            "market_type": market["key"]
                         }
                         bookmaker_entry["markets"].append(market_entry)
                     

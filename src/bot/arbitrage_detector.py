@@ -79,6 +79,7 @@ class ArbitrageDetector:
                     for market in bookmaker.get("markets", []):
                         if market.get("key") != market_key:
                             continue
+                        market_type = market.get("market_type", market.get("key", "h2h"))
                         for outcome in market.get("outcomes", []):
                             name = outcome.get("name")
                             price = outcome.get("price")
@@ -117,6 +118,7 @@ class ArbitrageDetector:
                         "home_team": game.get("home_team"),
                         "away_team": game.get("away_team"),
                         "market": market_key,
+                        "market_type": market_type,
                         "outcomes": {name: float(odd) for name, odd in best_odds.items()},
                         "bookmakers": outcome_sources,
                         "percent_profit": percent_profit,

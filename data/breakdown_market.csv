@@ -1,0 +1,5 @@
+market,total_profit,avg_profit,win_rate,num_bets
+h2h,283.85999999999996,31.539999999999996,1.0,9
+spreads,121.32,15.165,0.875,8
+totals,16.28,1.0853333333333335,0.9333333333333333,15
+"h2h,spreads,totals",0.48,0.08,1.0,6

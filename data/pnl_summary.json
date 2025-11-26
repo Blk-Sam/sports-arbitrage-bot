@@ -1,0 +1,22 @@
+{
+  "total_profit": 421.94000000000005,
+  "avg_profit": 11.103684210526318,
+  "median_profit": 0.965,
+  "volatility": 32.11415234214253,
+  "max_drawdown": 0.0,
+  "win_rate": 0.9473684210526315,
+  "sharpe_ratio": 5.488717885745803,
+  "profit_factor": Infinity,
+  "total_bets": 38,
+  "wins": 36,
+  "losses": 2,
+  "longest_win_streak": 23,
+  "longest_loss_streak": 1,
+  "gross_profit": 421.94,
+  "gross_loss": 0.0,
+  "best_bet": 193.45,
+  "worst_bet": 0.0,
+  "start_bankroll": 105.08,
+  "current_bankroll": 527.0200000000001,
+  "roi": 401.5416825275981
+}

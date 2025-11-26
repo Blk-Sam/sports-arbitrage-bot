@@ -37,8 +37,9 @@ from src.dashboard.backup_panel import render_backup_panel # type: ignore
 # === CONFIGURATION ===
 PASSWORD = os.getenv("DASHBOARD_PASSWORD", "arbitrage2024")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin2024")
-DATA_DIR = os.getenv("DASHBOARD_DATA_DIR", "data")
-BET_LOG_FILE = os.getenv("BET_HISTORY_FILE", os.path.join(DATA_DIR, "bet_history.csv"))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+BET_LOG_FILE = os.path.join(DATA_DIR, "bet_history.csv")  # Force absolute, ignore env
 PNL_FILE = os.getenv("PNL_LOG_PATH", os.path.join(DATA_DIR, "daily_pnl.csv"))
 MARKET_EDGE_FILE = os.getenv("MARKET_EDGE_FILE", os.path.join(DATA_DIR, "market_edge_summary.csv"))
 ERROR_LOG_FILE = os.getenv("ERROR_LOG_PATH", "logs/error.log")
@@ -339,7 +340,19 @@ if data_source == "Upload CSV":
 elif data_source == "Live DB":
     df = load_db_table("bets", limit=200)
     status_msg = "✅ Loaded from database"
-elif os.path.isfile(BET_LOG_FILE):
+elif data_source == "Live Bot Feed":
+    st.write(f"🔍 DEBUG: BET_LOG_FILE = {BET_LOG_FILE}")
+    st.write(f"🔍 DEBUG: File exists? {os.path.isfile(BET_LOG_FILE)}")
+    st.write(f"🔍 DEBUG: Current directory = {os.getcwd()}")
+    st.write(f"🔍 DEBUG: PROJECT_ROOT = {PROJECT_ROOT}")
+    st.write(f"🔍 DEBUG: DATA_DIR = {DATA_DIR}")
+    
+    if os.path.isfile(BET_LOG_FILE):
+        df = load_csv_safely(BET_LOG_FILE, expected_cols=["profit", "timestamp"])
+        status_msg = f"✅ Loaded {os.path.basename(BET_LOG_FILE)}"
+    else:
+        st.error(f"❌ File not found: {BET_LOG_FILE}")
+
     df = load_csv_safely(BET_LOG_FILE, expected_cols=["profit", "timestamp"])
     status_msg = f"✅ Loaded {os.path.basename(BET_LOG_FILE)}"
 else:

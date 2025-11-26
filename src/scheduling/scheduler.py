@@ -28,6 +28,7 @@ from src.notifications.telegram_notifications import ( # type: ignore
 
 # Import backup manager functions
 from src.bot.backup_manager import backup_daily, BackupManager # type: ignore
+from src.reporting.reporting import run_report  # type: ignore
 
 # === CONFIGURATION ===
 load_dotenv('config/.env')
@@ -71,7 +72,7 @@ SCHEDULER_LOG_FILE = os.getenv("SCHEDULER_LOG_FILE", "scheduling/scheduler_log.c
 CACHE_FILE = os.getenv("SCHEDULER_CACHE_FILE", "scheduling/scheduler_cache.pkl")
 REPORTING_FILE = os.getenv("BET_HISTORY_FILE", "data/bet_history.csv")
 MANUAL_PNL_FILE = os.getenv("MANUAL_PNL_FILE", "data/manual_pnl.csv")
-DATA_DIR = os.getenv("DASHBOARD_DATA_DIR", "data")
+DATA_DIR = os.getenv("MANUAL_PNL_FILE", "manual_pnl.csv")  # ✅ Just filename
 ROI_TUNE_THRESHOLD = float(os.getenv("ROI_TUNE_THRESHOLD", 15))
 MIN_SLEEP_INTERVAL = int(os.getenv("MIN_SLEEP_INTERVAL", 300))
 MAX_SLEEP_INTERVAL = int(os.getenv("MAX_SLEEP_INTERVAL", 10800))  # 3 hours max
@@ -173,6 +174,62 @@ def perform_daily_backup() -> None:
             logger.info("\n" + "=" * 70)
             logger.info("💾 PERFORMING DAILY BACKUP AT MIDNIGHT")
             logger.info("=" * 70)
+
+
+def perform_daily_report() -> None:
+    """
+    Generate and send daily performance report at 11:59 PM.
+    """
+    global _last_daily_backup
+    
+    now = datetime.now()
+    
+    # Check if it's 11:59 PM hour (23:00-23:59) 
+    if now.hour == 23:
+        # Check if we already sent report today
+        today_date = now.date()
+        report_key = f"report_{today_date}"
+        
+        # Use a simple file-based flag to track if report was sent today
+        report_flag_file = "data/.last_daily_report"
+        should_send = True
+        
+        if os.path.exists(report_flag_file):
+            try:
+                with open(report_flag_file, 'r') as f:
+                    last_report_date = f.read().strip()
+                    if last_report_date == str(today_date):
+                        should_send = False
+            except:
+                pass
+        
+        if should_send:
+            logger.info("\n" + "=" * 70)
+            logger.info("?? GENERATING DAILY PERFORMANCE REPORT")
+            logger.info("=" * 70)
+            
+            try:
+                # Generate and send report
+                run_report(
+                    REPORTING_FILE,
+                    telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+                    telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID")
+                )
+                
+                logger.info("? Daily report sent successfully")
+                
+                # Mark report as sent today
+                with open(report_flag_file, 'w') as f:
+                    f.write(str(today_date))
+                
+                log_scheduler_event("DAILY_REPORT_SUCCESS", f"Report generated at {now.strftime('%H:%M')}")
+                
+            except Exception as e:
+                logger.error(f"? Daily report error: {e}", exc_info=True)
+                send_error_alert("Daily Report", str(e)[:200], "warning")
+                log_scheduler_event("DAILY_REPORT_ERROR", str(e))
+            
+            logger.info("=" * 70)
             
             try:
                 # Create daily backup
@@ -209,7 +266,12 @@ def perform_daily_backup() -> None:
                 send_error_alert("Daily Backup", str(e)[:200], "warning")
                 log_scheduler_event("DAILY_BACKUP_ERROR", str(e))
             
-            logger.info("=" * 70)
+                logger.info("=" * 70)
+
+
+                log_scheduler_event("DAILY_REPORT_ERROR", str(e))
+            
+                logger.info("=" * 70)
 
 def healthcheck_heartbeat() -> None:
     """Update heartbeat file for external monitoring."""
@@ -570,18 +632,43 @@ def run_bot_with_key(api_key: str) -> bool:
     
     try:
         # CRITICAL FIX: Use module execution instead of direct file call
+        # Set PYTHONPATH for subprocess
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        env = os.environ.copy()
+        env['PYTHONPATH'] = project_root
+
+        # Update bankroll from last session before running bot
+        try:
+            update_result = subprocess.run(
+                [sys.executable, 'update_bankroll.py'],
+                capture_output=True, encoding='utf-8', errors='replace',
+                text=True,
+                timeout=10,
+                cwd=project_root,
+                env=env
+            )
+            if update_result.returncode == 0:
+                logger.info('? Bankroll updated from last session')
+            else:
+                logger.warning(f'?? Bankroll update failed: {update_result.stderr}')
+        except Exception as e:
+            logger.warning(f'?? Could not update bankroll: {e}')
+
         result = subprocess.run(
             [sys.executable, '-m', 'src.bot.main'],
-            capture_output=True,
+            capture_output=True, encoding='utf-8', errors='replace',
             text=True,
-            timeout=600,
-            cwd=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Run from project root
+            timeout=3600,
+            cwd=project_root,  # Run from project root
+            env=env  # Include PYTHONPATH
         )
         
         logger.info(f"Bot stdout:\n{result.stdout}")
         if result.stderr:
             logger.error(f"Bot stderr:\n{result.stderr}")
-            send_error_alert("Bot Execution Error", result.stderr[:400], "error")
+            # Only send error alert for actual ERROR/CRITICAL logs, not INFO
+            if "ERROR:" in result.stderr or "CRITICAL:" in result.stderr or "Traceback" in result.stderr:
+                send_error_alert("Bot Execution Error", result.stderr[:400], "error")
         
         logger.info(f"Bot exited with code {result.returncode}")
         log_scheduler_event("BOT_FINISH", f"Code: {result.returncode}")
@@ -1011,3 +1098,7 @@ if __name__ == "__main__":
         logger.error(f"Fatal startup error: {e}", exc_info=True)
         send_error_alert("Scheduler Startup", str(e)[:200], "critical")
         sys.exit(1)
+
+
+
+

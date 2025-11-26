@@ -15,6 +15,7 @@ import pandas as pd
 
 
 from src.bot.profit_tracker import log_bet
+from src.bot.pending_bet_tracker import PendingBetTracker
 from src.reporting.reporting import run_report
 from src.bot.arbitrage_detector import ArbitrageDetector
 from src.bot.data_collector import OddsDataCollector
@@ -569,7 +570,7 @@ def write_csv_entry(log_file: str, entry: dict) -> None:
         logger.info(f"[DRY RUN] Would write to {log_file}: {entry}")
         return
     
-    file_exists = os.isfile(log_file)
+    file_exists = os.path.isfile(log_file)
     try:
         with open(log_file, "a", newline='') as f:
             writer = csv.DictWriter(f, fieldnames=entry.keys())
@@ -846,6 +847,21 @@ async def main():
     bookmakers_str = ",".join(ALBERTA_BOOKS)
     markets_str = ",".join(MARKETS_TO_SCAN)
     notified_arbs = set()
+
+    # Load existing bets from history to prevent duplicates
+    if os.path.exists(BET_HISTORY_FILE):
+        try:
+            bet_df = pd.read_csv(BET_HISTORY_FILE)
+            if not bet_df.empty:
+                for _, row in bet_df.iterrows():
+                    try:
+                        match_id = (row['match'], row['sport'], row['market'])
+                        notified_arbs.add(match_id)
+                    except:
+                        pass
+                logger.info(f'?? Loaded {len(notified_arbs)} previous bets from history')
+        except Exception as e:
+            logger.warning(f'?? Could not load bet history: {e}')
     
     try:
         # Prioritize sports based on manual P&L
@@ -961,17 +977,39 @@ async def main():
                 # Write to CSV
                 write_csv_entry(SIM_LOG_FILE, bet_entry)
                 
-                # Simulate execution if in simulation mode
+                # Add to pending bet tracker (DO NOT update bankroll yet)
                 if SIMULATE_BET_PLACEMENT:
-                    actual_profit, actual_odds = simulate_bet_execution(stakes, odds, SLIPPAGE)
-                    bankroll_mgr.update(actual_profit)
-                    bet_entry['sim_actual_profit'] = round(actual_profit, 2)
-                    bet_entry['sim_actual_odds'] = str(actual_odds)
+                    # Initialize pending tracker if not exists
+                    if 'pending_tracker' not in globals():
+                        global pending_tracker
+                        pending_tracker = PendingBetTracker()
+                    
+                    # Store bet as pending - will settle with real results later
+                    pending_bet_data = {
+                        'arb_id': bet_entry.get('timestamp', '').replace(' ', '-').replace(':', '-'),
+                        'game_id': best_arb.get('game_id', 'unknown'),
+                        'sport': sport,
+                        'home_team': best_arb['home_team'],
+                        'away_team': best_arb['away_team'],
+                        'commence_time': best_arb.get('commence_time', ''),
+                        'bets': [
+                            {'team': team, 'stake': stakes[i], 'odds': odds[i]}
+                            for i, team in enumerate(team_names)
+                        ],
+                        'expected_profit': profit
+                    }
+                    
+                    pending_tracker.add_pending_bet(pending_bet_data)
+                    
+                    # Log bet but mark as pending
+                    bet_entry['result'] = 'pending'
+                    bet_entry['sim_actual_profit'] = 'pending'
                     log_bet(bet_entry)
+                    
                     logger.info(
-                        f"Actual Profit: ${actual_profit:.2f} | "
-                        f"Bankroll: ${bankroll_mgr.bankroll:.2f} | "
-                        f"Result: {bet_entry['result']}"
+                        f"?? Bet added to pending (will settle after game) | "
+                        f"Expected: ${profit:.2f} | "
+                        f"Game: {best_arb['home_team']} vs {best_arb['away_team']}"
                     )
                 
                 simulation_log.append(bet_entry)
@@ -1107,3 +1145,5 @@ if __name__ == "__main__":
         
         send_error_alert("Fatal Error", str(e), "critical")
         sys.exit(1)
+
+

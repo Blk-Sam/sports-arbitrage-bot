@@ -132,7 +132,7 @@ class AdaptivePoller:
     
     def _initialize_priorities(self) -> None:
         """Initialize sport and market priorities from manual P&L data."""
-        if not self.manual_pnl_analyzer or not self.manual_pnl_analyzer.data or self.manual_pnl_analyzer.data.empty:
+        if not self.manual_pnl_analyzer or self.manual_pnl_analyzer.data is None or self.manual_pnl_analyzer.data.empty:
             logger.info("No manual P&L data - using default priorities")
             return
         
