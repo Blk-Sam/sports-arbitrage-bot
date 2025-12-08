@@ -1,2 +1,32 @@
 timestamp,match,sport,market,region,bookmaker_1,odds_1,stake_1,bookmaker_2,odds_2,stake_2,profit,result,bankroll_after,margin_percent,start_time
 2025-11-25 19:18:31,Edmonton Oilers vs Dallas Stars,icehockey_nhl,spreads,,,,,,,,10.0,pending,100.00,20.0,2025-11-26T02:10:19Z
+2025-12-02 15:52:15,Detroit Red Wings vs Boston Bruins,icehockey_nhl,totals,,,,,,,,0.63,pending,100.00,2.0,2025-12-03T00:10:00Z
+2025-12-02 15:52:25,New York Islanders vs Tampa Bay Lightning,icehockey_nhl,totals,,,,,,,,0.79,pending,100.00,2.5,2025-12-03T00:10:00Z
+2025-12-02 15:52:33,Edmonton Oilers vs Minnesota Wild,icehockey_nhl,totals,,,,,,,,0.2,pending,100.00,1.0,2025-12-03T02:10:00Z
+2025-12-02 15:52:41,Vegas Golden Knights vs Chicago Blackhawks,icehockey_nhl,totals,,,,,,,,0.07,pending,100.00,0.5,2025-12-03T03:10:00Z
+2025-12-02 16:04:55,Notre Dame Fighting Irish vs Missouri Tigers,basketball_ncaab,spreads,,,,,,,,0.04,pending,100.00,0.5,2025-12-03T02:00:00Z
+2025-12-02 16:39:15,Detroit Red Wings vs Boston Bruins,icehockey_nhl,totals,,,,,,,,0.67,pending,100.00,2.5,2025-12-03T00:10:00Z
+2025-12-02 16:39:24,New York Islanders vs Tampa Bay Lightning,icehockey_nhl,totals,,,,,,,,0.9,pending,100.00,2.5,2025-12-03T00:10:00Z
+2025-12-02 16:39:33,Edmonton Oilers vs Minnesota Wild,icehockey_nhl,totals,,,,,,,,0.2,pending,100.00,1.0,2025-12-03T02:10:00Z
+2025-12-02 17:26:40,Detroit Red Wings vs Boston Bruins,icehockey_nhl,spreads,,,,,,,,1.25,pending,100.00,2.5,2025-12-03T00:08:56Z
+2025-12-02 17:26:48,New York Rangers vs Dallas Stars,icehockey_nhl,spreads,,,,,,,,7.5,pending,100.00,15.0,2025-12-03T00:09:06Z
+2025-12-02 17:26:58,Nashville Predators vs Calgary Flames,icehockey_nhl,totals,,,,,,,,0.44,pending,100.00,2.0,2025-12-03T01:10:00Z
+2025-12-02 17:27:07,Edmonton Oilers vs Minnesota Wild,icehockey_nhl,totals,,,,,,,,0.2,pending,100.00,1.0,2025-12-03T02:10:00Z
+2025-12-02 17:27:15,Vegas Golden Knights vs Chicago Blackhawks,icehockey_nhl,totals,,,,,,,,0.67,pending,100.00,2.0,2025-12-03T03:10:00Z
+2025-12-02 17:31:31,South Carolina Gamecocks vs Virginia Tech Hokies,basketball_ncaab,h2h,,,,,,,,5.5,pending,100.00,11.0,2025-12-03T00:03:00Z
+2025-12-02 17:52:54,Detroit Red Wings vs Boston Bruins,icehockey_nhl,spreads,,,,,,,,3.75,pending,100.00,7.5,2025-12-03T00:08:56Z
+2025-12-02 17:53:04,Montréal Canadiens vs Ottawa Senators,icehockey_nhl,totals,,,,,,,,3.0,pending,100.00,6.0,2025-12-03T00:09:15Z
+2025-12-02 17:53:13,Florida Panthers vs Toronto Maple Leafs,icehockey_nhl,spreads,,,,,,,,12.0,pending,100.00,24.0,2025-12-03T00:38:36Z
+2025-12-02 17:53:21,Nashville Predators vs Calgary Flames,icehockey_nhl,totals,,,,,,,,0.79,pending,100.00,2.5,2025-12-03T01:10:00Z
+2025-12-02 17:53:30,Edmonton Oilers vs Minnesota Wild,icehockey_nhl,totals,,,,,,,,0.2,pending,100.00,1.0,2025-12-03T02:10:00Z
+2025-12-02 17:53:38,Vegas Golden Knights vs Chicago Blackhawks,icehockey_nhl,totals,,,,,,,,2.38,pending,100.00,5.0,2025-12-03T03:10:00Z
+2025-12-02 17:57:51,Bryant Bulldogs vs Stonehill Skyhawks,basketball_ncaab,spreads,,,,,,,,1.0,pending,100.00,2.0,2025-12-02T23:02:13Z
+2025-12-02 18:44:54,New York Islanders vs Tampa Bay Lightning,icehockey_nhl,spreads,,,,,,,,8.75,pending,100.00,17.5,2025-12-03T00:08:28Z
+2025-12-02 18:45:03,New York Rangers vs Dallas Stars,icehockey_nhl,spreads,,,,,,,,56.5,pending,100.00,113.0,2025-12-03T00:09:06Z
+2025-12-02 18:45:13,Edmonton Oilers vs Minnesota Wild,icehockey_nhl,totals,,,,,,,,0.49,pending,100.00,2.0,2025-12-03T02:10:00Z
+2025-12-02 18:45:21,Vegas Golden Knights vs Chicago Blackhawks,icehockey_nhl,totals,,,,,,,,2.38,pending,100.00,5.0,2025-12-03T03:10:00Z
+2025-12-02 18:49:38,South Carolina Gamecocks vs Virginia Tech Hokies,basketball_ncaab,h2h,,,,,,,,11.25,pending,100.00,22.5,2025-12-03T00:03:00Z
+2025-12-02 18:49:47,Wake Forest Demon Deacons vs Oklahoma Sooners,basketball_ncaab,h2h,,,,,,,,1.5,pending,100.00,3.0,2025-12-03T00:05:00Z
+2025-12-02 18:49:59,Loyola (Chi) Ramblers vs Central Michigan Chippewas,basketball_ncaab,h2h,,,,,,,,1.75,pending,100.00,3.5,2025-12-03T01:03:03Z
+2025-12-02 18:50:08,Notre Dame Fighting Irish vs Missouri Tigers,basketball_ncaab,spreads,,,,,,,,0.05,pending,100.00,0.5,2025-12-03T02:00:00Z
+2025-12-02 19:07:12,Boston Celtics vs New York Knicks,basketball_nba,h2h,,,,,,,,1.25,pending,100.00,2.5,2025-12-03T01:13:00Z

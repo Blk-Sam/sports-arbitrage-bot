@@ -1,20 +1,20 @@
 {
-  "timestamp": "2025-11-26T09:19:33.545902",
-  "total_api_calls": 377,
+  "timestamp": "2025-12-02T19:05:15.823890",
+  "total_api_calls": 34,
   "demo_phase": true,
   "status": "running",
-  "uptime_hours": 0.0,
+  "uptime_hours": 7.98,
   "adaptive_polling": {
-    "is_peak_hours": false,
+    "is_peak_hours": true,
     "sleep_mode": {
       "enabled": true,
       "sleep_hours": "00:00-08:00",
-      "current_hour": 9,
+      "current_hour": 19,
       "is_sleeping": false,
       "wake_time": null
     },
-    "quota_usage": "18.9%",
-    "time_multiplier": 3.0,
+    "quota_usage": "1.7%",
+    "time_multiplier": 1.0,
     "quota_multiplier": 1.0,
     "base_interval": 120,
     "sport_priorities": {},

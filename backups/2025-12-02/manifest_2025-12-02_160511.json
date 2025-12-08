@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-12-02_160511",
+  "backup_type": "shutdown",
+  "backup_file": "backup_2025-12-02_160511_shutdown.tar.gz",
+  "checksum": "036c648410301ccc9df52c060e47635e48e6c3d6965c4693e14aeb71496fee0a",
+  "files_count": 4,
+  "size_bytes": 990,
+  "size_mb": 0.0
+}

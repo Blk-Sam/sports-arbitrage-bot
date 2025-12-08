@@ -1,8 +1,14 @@
 {
-  "last_reset": "2025-11-26T16:19:34.724184+00:00",
-  "total_calls": 378,
+  "last_reset": "2025-12-03T02:07:01.135291+00:00",
+  "total_calls": 41,
   "call_counts": {
-    "82b0cde8217d8ae8": 96,
-    "f5bdcb55a8e4172a": 95
+    "e2d64b7208f129c9": 6,
+    "fd803782fa9b9cc5": 5,
+    "dc018e7c4a212e95": 5,
+    "3ebc79dcf06a066a": 5,
+    "82b0cde8217d8ae8": 5,
+    "f5bdcb55a8e4172a": 5,
+    "64f41159f3acfc6f": 5,
+    "d88891074f041f9a": 5
   }
 }

@@ -241,3 +241,35 @@ timestamp,event,details
 2025-11-26 09:18:05,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""americanfootball_nfl"", ""basketball_ncaab"", ""americanfootball_ncaaf"", ""basketball_nba"", ""icehockey_nhl""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": true, ""SLEEP_HOURS"": ""0-8""}"
 2025-11-26 09:19:13,SCHEDULER_STOPPED,User interrupted
 2025-11-26 09:19:32,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""basketball_nba"", ""americanfootball_ncaaf"", ""americanfootball_nfl"", ""basketball_ncaab"", ""icehockey_nhl""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": true, ""SLEEP_HOURS"": ""0-8""}"
+2025-11-26 09:24:40,SCHEDULED_SLEEP,Bot will run in 15.3 min
+2025-11-26 09:40:01,BOT_START,"Key: ...4172a, Reason: Normal operation (quota: 19.2%)"
+2025-11-26 09:53:26,BOT_FINISH,Code: 0
+2025-11-26 09:53:28,SLEEP_AFTER_RUN,Sleeping 900.0s
+2025-11-26 10:13:36,NO_NEXT_EVENT,Sleeping 12 min
+2025-11-26 10:17:17,SCHEDULER_STOPPED,User interrupted
+2025-12-02 11:06:44,SCHEDULER_STARTUP,"{""ADVANCE_MINUTES"": 20, ""MIN_API_INTERVAL"": 2.0, ""POST_RUN_SLEEP"": 900.0, ""BOOKMAKERS_STR"": ""bet365,betway,bodog,coolbet,888sport,unibet,pinnacle,betonlineag,bovada,sportsbet"", ""SPORT_WHITELIST"": [""basketball_ncaab"", ""americanfootball_ncaaf"", ""americanfootball_nfl"", ""icehockey_nhl"", ""basketball_nba""], ""DEMO_PHASE"": true, ""ADAPTIVE_SCHEDULING"": true, ""BASE_RUN_INTERVAL"": 120, ""PEAK_HOURS"": ""17-23"", ""QUOTA_THRESHOLDS"": ""Warning: 70%, Critical: 90%"", ""SLEEP_MODE"": true, ""SLEEP_HOURS"": ""0-8""}"
+2025-12-02 11:11:35,SCHEDULED_SLEEP,Bot will run in 268.4 min
+2025-12-02 15:40:01,BOT_START,"Key: ...cfc6f, Reason: Normal operation (quota: 0.3%)"
+2025-12-02 16:05:15,BOT_FINISH,Code: 0
+2025-12-02 16:05:18,SLEEP_AFTER_RUN,Sleeping 900.0s
+2025-12-02 16:25:08,SCHEDULED_SLEEP,Bot will run in 1.9 min
+2025-12-02 16:27:01,BOT_START,"Key: ...d8ae8, Reason: Normal operation (quota: 0.6%)"
+2025-12-02 16:52:05,BOT_FINISH,Code: 0
+2025-12-02 16:52:07,SLEEP_AFTER_RUN,Sleeping 900.0s
+2025-12-02 17:08:45,NO_NEXT_EVENT,Sleeping 4 min
+2025-12-02 17:12:45,NO_NEXT_EVENT,Sleeping 4 min
+2025-12-02 17:16:45,NO_NEXT_EVENT,Sleeping 4 min
+2025-12-02 17:22:22,RUN_NOW,Event at 2025-12-03 00:35:00+00:00
+2025-12-02 17:22:23,BOT_START,"Key: ...41f9a, Reason: Normal operation (quota: 1.1%)"
+2025-12-02 17:31:54,BOT_FINISH,Code: 0
+2025-12-02 17:31:56,SLEEP_AFTER_RUN,Sleeping 900.0s
+2025-12-02 17:48:34,RUN_NOW,Event at 2025-12-03 01:00:00+00:00
+2025-12-02 17:48:36,BOT_START,"Key: ...4172a, Reason: Normal operation (quota: 1.5%)"
+2025-12-02 17:58:04,BOT_FINISH,Code: 0
+2025-12-02 17:58:05,SLEEP_AFTER_RUN,Sleeping 900.0s
+2025-12-02 18:14:42,SCHEDULED_SLEEP,Bot will run in 25.3 min
+2025-12-02 18:40:01,BOT_START,"Key: ...12e95, Reason: Normal operation (quota: 1.7%)"
+2025-12-02 18:50:14,BOT_FINISH,Code: 0
+2025-12-02 18:50:15,SLEEP_AFTER_RUN,Sleeping 900.0s
+2025-12-02 19:06:53,RUN_NOW,Event at 2025-12-03 02:07:00+00:00
+2025-12-02 19:06:54,BOT_START,"Key: ...129c9, Reason: Normal operation (quota: 2.0%)"
